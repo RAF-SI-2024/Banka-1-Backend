@@ -1,4 +1,4 @@
-package com.banka1.user.service;
+package com.banka1.user.services;
 
 import com.banka1.user.DTO.request.LoginRequest;
 import com.banka1.user.aspect.AuthAspect;
@@ -8,6 +8,8 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
+import com.banka1.user.service.BlackListTokenService;
+import com.banka1.user.service.IAuthService;
 import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import io.jsonwebtoken.Claims;
@@ -32,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTests {
+public class AuthServiceTest {
     @Mock
     private CustomerRepository customerRepository;
     @Mock
@@ -85,6 +87,7 @@ public class AuthServiceTests {
     @Test
     void authorizationTest_validTokenNoPerms() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of(Permission.CREATE_EMPLOYEE.toString()));
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken" });
@@ -104,6 +107,7 @@ public class AuthServiceTests {
     void authorizationTest_validTokenWrongPosition() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of());
         when(claims.get("position", String.class)).thenReturn(Position.WORKER.toString());
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken" });
@@ -123,6 +127,7 @@ public class AuthServiceTests {
     void authorizationTest_validTokenWithInvalidIdFallback() throws Throwable {
         when(claims.get("permissions")).thenReturn(List.of(Permission.CREATE_EMPLOYEE.toString()));
         when(claims.get("id", Long.class)).thenReturn(1L);
+        when(claims.get("isAdmin", Boolean.class)).thenReturn(false);
         when(joinPoint.getSignature()).thenReturn(methodSignature);
         when(methodSignature.getParameterNames()).thenReturn(new String[] { "authorization", "id" });
         when(joinPoint.getArgs()).thenReturn(new Object[] { "Bearer ValidanToken", 2L });

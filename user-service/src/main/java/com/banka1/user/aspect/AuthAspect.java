@@ -4,7 +4,6 @@ import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
 import com.banka1.user.service.BlackListTokenService;
 import com.banka1.user.service.IAuthService;
-import com.banka1.user.service.implementation.AuthService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
 import io.jsonwebtoken.Claims;
@@ -30,10 +29,10 @@ import java.util.stream.IntStream;
 @Configuration
 @EnableAspectJAutoProxy
 public class AuthAspect {
-    private final AuthService authService;
+    private final IAuthService authService;
     private final BlackListTokenService blackListTokenService;
 
-    public AuthAspect(AuthService authService, BlackListTokenService blackListTokenService) {
+    public AuthAspect(IAuthService authService, BlackListTokenService blackListTokenService) {
         this.authService = authService;
         this.blackListTokenService = blackListTokenService;
     }
@@ -41,21 +40,19 @@ public class AuthAspect {
     // Izvlači token iz prosledjenog autorizacionog parametra
     private String parseAuthToken(String[] parameterNames, Object[] args) {
         for (int i = 0; i < parameterNames.length; i++) {
-            if (parameterNames[i].equals("token")) {
-                return args[i].toString();
+            if (parameterNames[i].equals("authorization") && args[i] != null) {
+                return authService.getToken(args[i].toString());
             }
         }
         return null;
     }
 
-    private String getAuthToken() {
+    private String getAuthTokenFromRequest() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
             String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                return authHeader.substring(7);
-            }
+            return authService.getToken(authHeader);
         }
         return null;
     }
@@ -64,8 +61,10 @@ public class AuthAspect {
     public Object authorize(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Method method = methodSignature.getMethod();
-//        String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
-        String token = getAuthToken();
+
+        String token = parseAuthToken(methodSignature.getParameterNames(), joinPoint.getArgs());
+        if(token == null)
+            token = getAuthTokenFromRequest();
 
         if(token == null) {
             // Token ne postoji, tj. korisnik nije ulogovan
@@ -96,11 +95,6 @@ public class AuthAspect {
             return joinPoint.proceed();
         }
 
-        // ako je admin
-        if(claims.get("isAdmin", Boolean.class).equals(true)) {
-            return joinPoint.proceed();
-        }
-
         if(authorization.allowIdFallback()) {
             OptionalInt maybeIdIndex = IntStream.range(0, methodSignature.getParameterNames().length).filter(i -> methodSignature.getParameterNames()[i].compareTo("id") == 0).findFirst();
             if(maybeIdIndex.isPresent()) {
@@ -109,6 +103,11 @@ public class AuthAspect {
                     return joinPoint.proceed();
                 }
             }
+        }
+
+        // ako je admin
+        if(Objects.equals(claims.get("isAdmin", Boolean.class), true)) {
+            return joinPoint.proceed();
         }
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.FORBIDDEN), false, null, ResponseMessage.FORBIDDEN.toString());

@@ -4,6 +4,7 @@ import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.EmployeeService;
+import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -68,15 +68,9 @@ public class SearchController {
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", employees
-            ));
+            return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
@@ -87,8 +81,6 @@ public class SearchController {
     @GetMapping("customers")
     @Authorization(permissions = { Permission.LIST_CUSTOMER })
     public ResponseEntity<?> searchCustomers(
-//            @RequestHeader("Authorization")
-//            String authorization,
             @Parameter(
                     description = "Redni broj stranice rezultata (podrazumevana vrednost je prva stranica)",
                     example = "0"
@@ -125,15 +117,9 @@ public class SearchController {
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", employees
-            ));
+            return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 }

@@ -1,17 +1,34 @@
 package com.banka1.user.services;
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
-import com.banka1.user.mapper.CustomerMapper;
+import com.banka1.user.DTO.banking.CreateAccountWithoutOwnerIdDTO;
+import com.banka1.user.DTO.banking.helper.AccountStatus;
+import com.banka1.user.DTO.banking.helper.AccountSubtype;
+import com.banka1.user.DTO.banking.helper.AccountType;
+import com.banka1.user.DTO.banking.helper.CurrencyType;
+import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.UpdateCustomerRequest;
+import com.banka1.user.DTO.response.CustomerPageResponse;
+import com.banka1.user.DTO.response.CustomerResponse;
+import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Customer;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
+import com.banka1.user.service.SetPasswordService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.util.AssertionErrors;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -19,7 +36,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +45,15 @@ public class CustomerServiceTest {
     private CustomerRepository customerRepository;
 
     @Mock
+    private SetPasswordService setPasswordService;
+
+    @Mock
+    private MessageHelper messageHelper;
+
+    @Mock
+    private JmsTemplate jmsTemplate;
+
+    @Mock
     private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -36,24 +61,43 @@ public class CustomerServiceTest {
 
     @Test
     void testCreateCustomer() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setPassword("1234");
-        Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
+        var createAccountDTO = new CreateAccountWithoutOwnerIdDTO();
+        createAccountDTO.setCurrency(CurrencyType.RSD);
+        createAccountDTO.setType(AccountType.CURRENT);
+        createAccountDTO.setSubtype(AccountSubtype.PERSONAL);
+        createAccountDTO.setDailyLimit(0.0);
+        createAccountDTO.setMonthlyLimit(0.0);
+        createAccountDTO.setStatus(AccountStatus.ACTIVE);
 
-        when(passwordEncoder.encode(anyString())).thenReturn("####");
-        when(customerRepository.save(any(Customer.class))).thenReturn(customer);
+        var customerDTO = new CreateCustomerRequest();
+        customerDTO.setFirstName("Petar");
+        customerDTO.setLastName("Petrovic");
+        customerDTO.setUsername("ppetrovic");
+        customerDTO.setAddress("Ulica");
+        customerDTO.setEmail("ppetrovic@example.com");
+        customerDTO.setGender(Gender.MALE);
+        customerDTO.setBirthDate(90012002L);
+        customerDTO.setPhoneNumber("555333");
+        customerDTO.setAccountInfo(createAccountDTO);
+
+        when(customerRepository.save(any(Customer.class)))
+                .then(invocation -> {
+                    var savedCustomer = (Customer) invocation.getArguments()[0];
+                    savedCustomer.setId(1L);
+                    return savedCustomer;
+                });
 
         Customer createdCustomer = customerService.createCustomer(customerDTO);
 
         assertNotNull(createdCustomer);
-        assertEquals("####", createdCustomer.getPassword());
+        assertNull(createdCustomer.getPassword());
         verify(customerRepository, times(1)).save(any(Customer.class));
     }
 
     @Test
     void testUpdateCustomer() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
+        var customerDTO = new UpdateCustomerRequest();
+        customerDTO.setFirstName("Petar");
 
         Customer customer = new Customer();
         customer.setId(1L);
@@ -70,10 +114,10 @@ public class CustomerServiceTest {
 
     @Test
     void testUpdateCustomerNotFound() {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setIme("Petar");
+        var customerDTO = new UpdateCustomerRequest();
+        customerDTO.setFirstName("Petar");
 
-        when(customerRepository.findById(1L)).thenReturn(Optional.empty());
+        //when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 
 //      assertThrows(...)
     }
@@ -118,18 +162,109 @@ public class CustomerServiceTest {
 
     @Test
     void testUpdateCustomerPermissionsInvalid() {
-        when(customerRepository.findById(1L)).thenReturn(Optional.of(new Customer()));
-
-        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+        var exception = assertThrows(ResponseStatusException.class, () -> {
             customerService.updateCustomerPermissions(1L, null);
         });
 
-        assertEquals("Lista permisija ne može biti prazna ili null", exception.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Lista permisija ne može biti prazna ili null", exception.getBody().getDetail());
 
         exception = assertThrows(ResponseStatusException.class, () -> {
             customerService.updateCustomerPermissions(1L, List.of());
         });
 
-        assertEquals("Lista permisija ne može biti prazna ili null", exception.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Lista permisija ne može biti prazna ili null", exception.getBody().getDetail());
+    }
+
+    @Test
+    void findByIdSuccess() {
+        String id = "1";
+        var entity = getCustomer();
+
+        Mockito.when(customerRepository.findById(1L)).thenReturn(Optional.of(entity));
+
+        var response = getCustomerResponse();
+
+        AssertionErrors.assertEquals("Response", response, customerService.findById(id));
+
+        Mockito.verify(customerRepository).findById(1L);
+    }
+
+    private static Customer getCustomer() {
+        var entity = new Customer();
+
+        entity.setFirstName("Petar");
+        entity.setLastName("Petrovic");
+        entity.setUsername("ppetrovic");
+        entity.setBirthDate(1234567890L);
+        entity.setGender(Gender.MALE);
+        entity.setEmail("ppetrovic@banka.rs");
+        entity.setPhoneNumber("99999999");
+        entity.setAddress("Ulica");
+        entity.setPermissions(List.of());
+        entity.setId(1L);
+        return entity;
+    }
+
+    private static CustomerResponse getCustomerResponse() {
+        return new CustomerResponse(
+                1L,
+                "Petar",
+                "Petrovic",
+                "ppetrovic",
+                1234567890L,
+                Gender.MALE,
+                "ppetrovic@banka.rs",
+                "99999999",
+                "Ulica",
+                List.of());
+    }
+
+    @Test
+    void findByIdNotFound() {
+        String id = "1";
+
+        Mockito.when(customerRepository.findById(1L)).thenReturn(Optional.empty());
+
+        AssertionErrors.assertNull("Response", customerService.findById(id));
+
+        Mockito.verify(customerRepository).findById(1L);
+    }
+
+    @Test
+    void findByIdInvalidId() {
+        String id = "Petar";
+
+        try {
+            customerService.findById(id);
+            fail("No exception.");
+        } catch (Exception e) {
+            AssertionErrors.assertNotNull("Error", e);
+        }
+    }
+
+    @Test
+    void search() {
+        var response = new CustomerPageResponse(1, List.of(getCustomerResponse()));
+
+        var pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
+        Mockito.when(customerRepository.findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(getCustomer()), pageable, 1));
+
+        AssertionErrors.assertEquals("Response", response,
+                customerService.search(0, 10, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
+
+        Mockito.verify(customerRepository).findAll(pageable);
+    }
+
+    @Test
+    void searchNoFilterValue() {
+        try {
+            customerService.search(0, 10, Optional.empty(), Optional.empty(), Optional.of("firstName"), Optional.empty());
+            fail("No exception.");
+        } catch (Exception e) {
+            AssertionErrors.assertNotNull("Error", e);
+        }
     }
 }

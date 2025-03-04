@@ -1,11 +1,11 @@
-package com.banka1.user.DTO;
+package com.banka1.user.DTO.request;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class NotificationDTO {
+public class NotificationRequest {
     private String email;
     private String subject;
     private String message;

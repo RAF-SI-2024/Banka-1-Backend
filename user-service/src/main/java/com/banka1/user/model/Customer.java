@@ -45,7 +45,7 @@ public class Customer {
     @Column(nullable = true)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String saltPassword;
 
     private String verificationCode;

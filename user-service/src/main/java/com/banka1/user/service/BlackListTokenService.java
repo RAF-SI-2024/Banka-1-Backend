@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class BlackListTokenService {
@@ -23,9 +24,9 @@ public class BlackListTokenService {
 
     // Brise sve tokene sa blacklist liste koji su stariji od 30 minuta
     // Pokretanje ove metode na svakih 5 minuta
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     public void cleanExpiredTokens() {
-        blacklistedTokens.entrySet().removeIf(e -> e.getValue().isBefore(Instant.now().minusSeconds(1800)));
+        blacklistedTokens.entrySet().removeIf(e -> e.getValue().isBefore(Instant.now().minusSeconds(30*60)));
     }
 
 

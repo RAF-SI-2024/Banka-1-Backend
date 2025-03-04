@@ -1,10 +1,6 @@
 package com.banka1.user.service;
 
-import com.banka1.user.DTO.NotificationDTO;
-import com.banka1.user.DTO.request.CreateEmployeeDto;
-import com.banka1.user.DTO.request.SetPasswordDTO;
-import com.banka1.user.DTO.request.UpdateEmployeeDto;
-import com.banka1.user.DTO.request.UpdatePermissionsDto;
+import com.banka1.user.DTO.request.*;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
@@ -12,11 +8,9 @@ import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Position;
-import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.jms.core.JmsTemplate;
@@ -33,24 +27,19 @@ import java.util.UUID;
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
 
 @Service
+@RequiredArgsConstructor
 public class EmployeeService {
+    private final SetPasswordService setPasswordService;
     private final EmployeeRepository employeeRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JmsTemplate jmsTemplate;
+    private final ModelMapper modelMapper;
     private final MessageHelper messageHelper;
-    private final String destinationEmail;
+
+    @Value("${destination.email}")
+    private String destinationEmail;
 	@Value("${frontend.url}")
 	private String frontendUrl;
-
-    @Autowired
-    public EmployeeService(EmployeeRepository customerRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
-        this.employeeRepository = customerRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-        this.jmsTemplate = jmsTemplate;
-        this.messageHelper = messageHelper;
-        this.destinationEmail = destinationEmail;
-
-    }
 
     public EmployeeResponse findById(String id) {
         var employeeOptional = employeeRepository.findById(Long.parseLong(id));
@@ -60,16 +49,14 @@ public class EmployeeService {
         return getEmployeeResponse(employee);
     }
 
-    @Autowired
-    private ModelMapper modelMapper;
 
-    public Employee createEmployee(CreateEmployeeDto createEmployeeDto) {
+    public Employee createEmployee(CreateEmployeeRequest createEmployeeRequest) {
         // Provera da li već postoji nalog sa istim email-om
-        if (employeeRepository.existsByEmail(createEmployeeDto.getEmail())) {
+        if (employeeRepository.existsByEmail(createEmployeeRequest.getEmail())) {
             throw new RuntimeException("Nalog sa ovim email-om već postoji!");
         }
-        Employee employee = modelMapper.map(createEmployeeDto, Employee.class);
-        employee.setActive(createEmployeeDto.getActive());
+        Employee employee = modelMapper.map(createEmployeeRequest, Employee.class);
+        employee.setActive(createEmployeeRequest.getActive());
 
         String verificationCode = UUID.randomUUID().toString();
         employee.setVerificationCode(verificationCode);
@@ -78,7 +65,7 @@ public class EmployeeService {
             throw new RuntimeException("Polje pol je obavezno");
         }
 
-        NotificationDTO emailDTO = new NotificationDTO();
+        NotificationRequest emailDTO = new NotificationRequest();
         emailDTO.setSubject("Nalog uspešno kreiran");
         emailDTO.setEmail(employee.getEmail());
 	    emailDTO
@@ -88,17 +75,19 @@ public class EmployeeService {
         emailDTO.setLastName(employee.getLastName());
         emailDTO.setType("email");
 
+        setPasswordService.saveSetPasswordRequest(verificationCode, employee.getId());
+
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return employeeRepository.save(employee);
     }
 
-    public void setPassword(SetPasswordDTO setPasswordDTO) {
-        Employee employee = employeeRepository.findByVerificationCode(setPasswordDTO.getCode())
+    public void setPassword(SetPasswordRequest setPasswordRequest) {
+        Employee employee = employeeRepository.findByVerificationCode(setPasswordRequest.getToken())
                 .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
 
         var salt = generateSalt();
-        var hashed = passwordEncoder.encode(setPasswordDTO.getPassword() + salt);
+        var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
         employee.setPassword(hashed);
         employee.setSaltPassword(salt);
         employee.setVerificationCode(null);
@@ -106,33 +95,33 @@ public class EmployeeService {
         employeeRepository.save(employee);
     }
 
-    public Employee updateEmployee(Long id, UpdateEmployeeDto updateEmployeeDto) {
+    public Employee updateEmployee(Long id, UpdateEmployeeRequest updateEmployeeRequest) {
         Employee existingEmployee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zaposleni nije pronađen"));
 
         // Ažuriranje dozvoljenih polja
-        Optional.ofNullable(updateEmployeeDto.getFirstName()).ifPresent(existingEmployee::setFirstName);
-        Optional.ofNullable(updateEmployeeDto.getLastName()).ifPresent(existingEmployee::setLastName);
-        Optional.ofNullable(updateEmployeeDto.getPhoneNumber()).ifPresent(existingEmployee::setPhoneNumber);
-        Optional.ofNullable(updateEmployeeDto.getAddress()).ifPresent(existingEmployee::setAddress);
-        Optional.ofNullable(updateEmployeeDto.getPosition()).ifPresent(existingEmployee::setPosition);
-        Optional.ofNullable(updateEmployeeDto.getDepartment()).ifPresent(existingEmployee::setDepartment);
-        Optional.ofNullable(updateEmployeeDto.getActive()).ifPresent(existingEmployee::setActive);
-        Optional.ofNullable(updateEmployeeDto.getIsAdmin()).ifPresent(existingEmployee::setIsAdmin);
-        Optional.ofNullable(updateEmployeeDto.getGender()).ifPresent(existingEmployee::setGender);
-        Optional.ofNullable(updateEmployeeDto.getUsername()).ifPresent(existingEmployee::setUsername);
-        Optional.ofNullable(updateEmployeeDto.getEmail()).ifPresent(existingEmployee::setEmail);
-        Optional.ofNullable(updateEmployeeDto.getBirthDate()).ifPresent(existingEmployee::setBirthDate);
+        Optional.ofNullable(updateEmployeeRequest.getFirstName()).ifPresent(existingEmployee::setFirstName);
+        Optional.ofNullable(updateEmployeeRequest.getLastName()).ifPresent(existingEmployee::setLastName);
+        Optional.ofNullable(updateEmployeeRequest.getPhoneNumber()).ifPresent(existingEmployee::setPhoneNumber);
+        Optional.ofNullable(updateEmployeeRequest.getAddress()).ifPresent(existingEmployee::setAddress);
+        Optional.ofNullable(updateEmployeeRequest.getPosition()).ifPresent(existingEmployee::setPosition);
+        Optional.ofNullable(updateEmployeeRequest.getDepartment()).ifPresent(existingEmployee::setDepartment);
+        Optional.ofNullable(updateEmployeeRequest.getActive()).ifPresent(existingEmployee::setActive);
+        Optional.ofNullable(updateEmployeeRequest.getIsAdmin()).ifPresent(existingEmployee::setIsAdmin);
+        Optional.ofNullable(updateEmployeeRequest.getGender()).ifPresent(existingEmployee::setGender);
+        Optional.ofNullable(updateEmployeeRequest.getUsername()).ifPresent(existingEmployee::setUsername);
+        Optional.ofNullable(updateEmployeeRequest.getEmail()).ifPresent(existingEmployee::setEmail);
+        Optional.ofNullable(updateEmployeeRequest.getBirthDate()).ifPresent(existingEmployee::setBirthDate);
 
         return employeeRepository.save(existingEmployee);
     }
 
-    public Employee updatePermissions(Long id, UpdatePermissionsDto updatePermissionsDto){
+    public Employee updatePermissions(Long id, UpdatePermissionsRequest updatePermissionsRequest){
         Employee existingEmployee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zaposleni nije pronađen"));
 
 
-        Optional.ofNullable(updatePermissionsDto.getPermissions()).ifPresent(existingEmployee::setPermissions);
+        Optional.ofNullable(updatePermissionsRequest.getPermissions()).ifPresent(existingEmployee::setPermissions);
 
         return employeeRepository.save(existingEmployee);
     }

@@ -23,6 +23,9 @@ public class CustomerResponse {
     private String lastName;
 
     @NonNull
+    private String username;
+
+    @NonNull
     private Long birthDate;
 
     @NonNull

@@ -1,15 +1,20 @@
 package com.banka1.user.DTO.request;
 
 import com.banka1.user.model.helper.Department;
+import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Permission;
 import com.banka1.user.model.helper.Position;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
+
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
-public class CreateEmployeeDto {
+public class CreateEmployeeRequest {
 
     @NotBlank(message = "Ime ne može biti prazno")
     @Size(min = 2, max = 50, message = "Ime mora imati između 2 i 50 karaktera")
@@ -22,8 +27,8 @@ public class CreateEmployeeDto {
     @NotNull(message = "Datum rođenja je obavezan")
     private LocalDate birthDate;
 
-    @NotBlank(message = "Pol je obavezan")
-    private String gender;
+    @NotNull(message = "Pol je obavezan")
+    private Gender gender;
 
     @NotBlank(message = "Email je obavezan")
     @Email(message = "Email mora biti validan")
@@ -36,6 +41,7 @@ public class CreateEmployeeDto {
     private String address;
 
     @NotBlank(message = "Username je obavezan")
+    @Size(min = 2, max = 50, message = "Username mora imati između 2 i 50 karaktera")
     private String username;
 
     @NotBlank(message = "Pozicija je obavezna")
@@ -48,5 +54,6 @@ public class CreateEmployeeDto {
 
     private Boolean isAdmin = false; // default vrednost
 
+    @NotNull(message = "Lista permisija je obavezna (moze biti prazna)")
     private List<Permission> permissions;
 }

@@ -1,8 +1,7 @@
 package com.banka1.user.controllers;
 
-import com.banka1.user.DTO.request.ResetPasswordDTO;
-import com.banka1.user.DTO.request.ResetPasswordRequestDTO;
-import com.banka1.user.service.EmployeeService;
+import com.banka1.user.DTO.request.ResetPasswordConfirmationRequest;
+import com.banka1.user.DTO.request.ResetPasswordRequest;
 import com.banka1.user.service.ResetPasswordService;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.user.utils.ResponseTemplate;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,14 +24,14 @@ public class ResetPasswordController {
     private ResetPasswordService resetPasswordService;
 
     @PutMapping("/")
-    @Operation(summary = "Zahtev za resetovanje lozinke")
+    @Operation(summary = "Podnosenje zahteva za resetovanje lozinke")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Zahtev za resetovanje lozinke je uspešno poslat"),
             @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom slanja zahteva za resetovanje lozinke")
     })
-    public ResponseEntity<?> requestPasswordReset(@RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
+    public ResponseEntity<?> requestPasswordReset(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
-            resetPasswordService.requestPasswordReset(resetPasswordRequestDTO);
+            resetPasswordService.requestPasswordReset(resetPasswordRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_REQUEST_SUCCESS.toString()), null);
         } catch (Exception e) {
             System.out.println(e);
@@ -42,14 +40,14 @@ public class ResetPasswordController {
     }
 
     @PostMapping("/")
-    @Operation(summary = "Resetovanje lozinke")
+    @Operation(summary = "Resetovanje lozinke (verifikacija mejla i postavljanje nove lozinke)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lozinka je uspešno resetovana"),
             @ApiResponse(responseCode = "400", description = "Došlo je do greške prilikom resetovanja lozinke")
     })
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordConfirmationRequest resetPasswordConfirmationRequest) {
         try {
-            resetPasswordService.resetPassword(resetPasswordDTO);
+            resetPasswordService.resetPassword(resetPasswordConfirmationRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", ResponseMessage.PASSWORD_RESET_SUCCESS.toString()), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);

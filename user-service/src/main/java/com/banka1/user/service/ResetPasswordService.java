@@ -1,8 +1,8 @@
 package com.banka1.user.service;
 
-import com.banka1.user.DTO.NotificationDTO;
-import com.banka1.user.DTO.request.ResetPasswordDTO;
-import com.banka1.user.DTO.request.ResetPasswordRequestDTO;
+import com.banka1.user.DTO.request.NotificationRequest;
+import com.banka1.user.DTO.request.ResetPasswordConfirmationRequest;
+import com.banka1.user.DTO.request.ResetPasswordRequest;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.ResetPassword;
 import com.banka1.user.repository.CustomerRepository;
@@ -41,9 +41,9 @@ public class ResetPasswordService {
         this.destinationEmail = destinationEmail;
     }
 
-    public void requestPasswordReset(ResetPasswordRequestDTO resetPasswordRequestDTO) {
-        var customer = customerRepository.findByEmail(resetPasswordRequestDTO.getEmail());
-        var employee = employeeRepository.findByEmail(resetPasswordRequestDTO.getEmail());
+    public void requestPasswordReset(ResetPasswordRequest resetPasswordRequest) {
+        var customer = customerRepository.findByEmail(resetPasswordRequest.getEmail());
+        var employee = employeeRepository.findByEmail(resetPasswordRequest.getEmail());
         if (customer.isEmpty() && employee.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found.");
         var resetPassword = new ResetPassword();
@@ -52,7 +52,7 @@ public class ResetPasswordService {
         resetPassword.setExpirationDate(System.currentTimeMillis() + 1000 * 60 * 60 * 24);
         resetPassword.setCreatedDate(System.currentTimeMillis());
 
-        NotificationDTO emailDTO = new NotificationDTO();
+        NotificationRequest emailDTO = new NotificationRequest();
 
         if (customer.isPresent()) {
             resetPassword.setUserId(customer.get().getId());
@@ -75,8 +75,8 @@ public class ResetPasswordService {
         resetPasswordRepository.save(resetPassword);
     }
 
-    public void resetPassword(ResetPasswordDTO resetPasswordDTO) {
-        var resetPassword = resetPasswordRepository.findByToken(resetPasswordDTO.getToken());
+    public void resetPassword(ResetPasswordConfirmationRequest resetPasswordConfirmationRequest) {
+        var resetPassword = resetPasswordRepository.findByToken(resetPasswordConfirmationRequest.getToken());
         if (resetPassword == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token not found.");
 
@@ -85,7 +85,7 @@ public class ResetPasswordService {
         if (resetPassword.getUsed())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token already used.");
         String salt = generateSalt();
-        String hashed = BCrypt.hashpw(resetPasswordDTO.getPassword() + salt, BCrypt.gensalt());
+        String hashed = BCrypt.hashpw(resetPasswordConfirmationRequest.getPassword() + salt, BCrypt.gensalt());
         if (resetPassword.getType() == 0) {
             var customer = customerRepository.findById(resetPassword.getUserId());
             if(customer.isEmpty()) {

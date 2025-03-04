@@ -1,9 +1,9 @@
 package com.banka1.user.controllers;
 
-import com.banka1.user.DTO.request.CreateEmployeeDto;
-import com.banka1.user.DTO.request.SetPasswordDTO;
-import com.banka1.user.DTO.request.UpdateEmployeeDto;
-import com.banka1.user.DTO.request.UpdatePermissionsDto;
+import com.banka1.user.DTO.request.CreateEmployeeRequest;
+import com.banka1.user.DTO.request.SetPasswordRequest;
+import com.banka1.user.DTO.request.UpdateEmployeeRequest;
+import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.aspect.Authorization;
 import com.banka1.user.model.Employee;
 import com.banka1.user.model.helper.Permission;
@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users/employees")
 @Tag(name = "Employee API", description = "API za upravljanje zaposlenima")
@@ -39,27 +40,17 @@ public class EmployeeController {
     @GetMapping("/{id}")
     @Authorization(permissions = { Permission.READ_EMPLOYEE }, allowIdFallback = true )
     public ResponseEntity<?> getById(
-//            @RequestHeader("Authorization")
-//            String authorization,
             @Parameter(required = true, example = "1")
             @PathVariable String id
     ) {
         try {
             var employee = employeeService.findById(id);
             if (employee == null)
-                return ResponseEntity.status(HttpStatusCode.valueOf(404)).body(Map.of(
-                        "success", false,
-                        "error", "Korisnik nije pronadjen."
-                ));
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "data", employee
-            ));
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatusCode.valueOf(404)),
+                        false, null, "Korisnik nije pronadjen.");
+            return ResponseTemplate.create(ResponseEntity.ok(), true, employee, null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
 
@@ -70,35 +61,31 @@ public class EmployeeController {
             @ApiResponse(responseCode = "201", description = "Zaposleni uspešno kreiran"),
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
-    public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeDto createEmployeeDto) {
+    public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest createEmployeeRequest) {
         Employee savedEmployee = null;
         try {
-            savedEmployee = employeeService.createEmployee(createEmployeeDto);
+            savedEmployee = employeeService.createEmployee(createEmployeeRequest);
         } catch (RuntimeException e) {
-            System.err.println(e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            log.error("createEmployee: ", e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
         Map<String, Object> data = new HashMap<>();
         data.put("id", savedEmployee.getId());
         data.put("message", "Zaposleni uspešno kreiran");
-        response.put("data", data);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, data, null);
     }
 
     @PutMapping("/set-password")
-    @Operation(summary = "Set password", description = "Sets password for the user")
+    @Operation(summary = "Postavljanje lozinke", description = "Postavljanje lozinke i validacija mejla nakon kreiranja musterije")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Password set successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields")
+            @ApiResponse(responseCode = "200", description = "Uspeh"),
     })
-    public ResponseEntity<?> setPassword(@RequestBody SetPasswordDTO setPasswordDTO) {
-        System.out.println(setPasswordDTO);
+    public ResponseEntity<?> setPassword(@RequestBody SetPasswordRequest setPasswordRequest) {
+        System.out.println(setPasswordRequest);
         try {
-            employeeService.setPassword(setPasswordDTO);
+            employeeService.setPassword(setPasswordRequest);
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("message", "Lozinka uspešno postavljena"), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
@@ -113,19 +100,14 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
-    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody UpdateEmployeeDto updateEmployeeDto) {
-        Employee updatedEmployee = null;
+    public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody UpdateEmployeeRequest updateEmployeeRequest) {
         try {
-            updatedEmployee = employeeService.updateEmployee(id, updateEmployeeDto);
+            employeeService.updateEmployee(id, updateEmployeeRequest);
         } catch (RuntimeException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), e);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Podaci korisnika ažurirani");
-
-        return ResponseEntity.ok(response);
+        return ResponseTemplate.create(ResponseEntity.ok(), true, "Podaci korisnika ažurirani", null);
     }
 
     @DeleteMapping("/{id}")
@@ -138,15 +120,15 @@ public class EmployeeController {
     })
     public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
         if (!employeeService.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
-        employeeService.deleteEmployee(id);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Korisnik uspešno obrisan");
-
-        return ResponseEntity.ok(response);
+        try {
+            employeeService.deleteEmployee(id);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, "Korisnik uspešno obrisan", null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 
     @PutMapping("/{id}/permissions")
@@ -157,18 +139,17 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "Korisnik nije pronađen"),
             @ApiResponse(responseCode = "403", description = "Nemaš permisije za ovu akciju")
     })
-    public ResponseEntity<?> updatePermissions(@PathVariable Long id, @RequestBody UpdatePermissionsDto updatePermissionsDto){
+    public ResponseEntity<?> updatePermissions(@PathVariable Long id, @RequestBody UpdatePermissionsRequest updatePermissionsRequest){
 
         if (!employeeService.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Zaposleni sa ID-em " + id + " nije pronađen.");
         }
 
-        Employee updatedEmployee = employeeService.updatePermissions(id, updatePermissionsDto);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", "Permisije korisnika ažurirane");
-
-        return ResponseEntity.ok(response);
+        try {
+            employeeService.updatePermissions(id, updatePermissionsRequest);
+            return ResponseTemplate.create(ResponseEntity.ok(), true, "Permisije korisnika ažurirane", null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
     }
 }

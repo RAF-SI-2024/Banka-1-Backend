@@ -1,6 +1,5 @@
 package com.banka1.user.model;
 
-import com.banka1.user.model.helper.Gender;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,8 +1,10 @@
 package com.banka1.user.service;
 
-import com.banka1.user.DTO.CustomerDTO.CustomerDTO;
-import com.banka1.user.DTO.NotificationDTO;
-import com.banka1.user.DTO.request.SetPasswordDTO;
+import com.banka1.user.DTO.banking.CreateAccountDTO;
+import com.banka1.user.DTO.request.CreateCustomerRequest;
+import com.banka1.user.DTO.request.NotificationRequest;
+import com.banka1.user.DTO.request.SetPasswordRequest;
+import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.response.CustomerPageResponse;
 import com.banka1.user.DTO.response.CustomerResponse;
 import com.banka1.user.listener.MessageHelper;
@@ -17,8 +19,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -39,27 +40,20 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 @Service
 @Slf4j
 @Tag(name = "Customer Service", description = "Business logic for customer operations")
+@RequiredArgsConstructor
 public class CustomerService {
-
     private final CustomerRepository customerRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final SetPasswordService setPasswordService;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
-    private final String destinationEmail;
 
+    @Value("${destination.email}")
+    private String destinationEmail;
+    @Value("${destination.account}")
+    private String destinationAccount;
     @Value("${frontend.url}")
     private String frontendUrl;
-
-    @Autowired
-    public CustomerService(CustomerRepository customerRepository, SetPasswordService setPasswordService, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("${destination.email}") String destinationEmail) {
-        this.customerRepository = customerRepository;
-        this.setPasswordService = setPasswordService;
-        this.passwordEncoder = new BCryptPasswordEncoder();
-        this.jmsTemplate = jmsTemplate;
-        this.messageHelper = messageHelper;
-        this.destinationEmail = destinationEmail;
-    }
 
     public CustomerResponse findById(String id) {
         return findById(Long.parseLong(id));
@@ -70,20 +64,7 @@ public class CustomerService {
         if (customerOptional.isEmpty())
             return null;
         var customer = customerOptional.get();
-        return getCustomerResponse(customer);
-    }
-
-    private static CustomerResponse getCustomerResponse(Customer customer) {
-        return new CustomerResponse(
-                customer.getId(),
-                customer.getFirstName(),
-                customer.getLastName(),
-                customer.getBirthDate(),
-                customer.getGender(),
-                customer.getEmail(),
-                customer.getPhoneNumber(),
-                customer.getAddress(),
-                customer.getPermissions());
+        return CustomerMapper.customerToDto(customer);
     }
 
     public CustomerPageResponse search(int page, int pageSize, Optional<String> sortField, Optional<String> sortOrder, Optional<String> filterField, Optional<String> filterValueOptional) {
@@ -123,7 +104,7 @@ public class CustomerService {
             customerPage = customerRepository.findAll(pageRequest);
         return new CustomerPageResponse(
                 customerPage.getTotalElements(),
-                customerPage.stream().map(CustomerService::getCustomerResponse).toList()
+                customerPage.stream().map(CustomerMapper::customerToDto).toList()
         );
     }
 
@@ -138,21 +119,13 @@ public class CustomerService {
                     content = @Content(schema = @Schema(implementation = Customer.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public Customer createCustomer(CustomerDTO customerDTO) {
+    public Customer createCustomer(CreateCustomerRequest customerDTO) {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
-
-        // Generate salt and hash password
-        String salt = generateSalt();
-        String saltedPassword = salt + customer.getPassword();
-        String hashedPassword = passwordEncoder.encode(saltedPassword);
-
-        customer.setPassword(hashedPassword);
-        customer.setSaltPassword(salt);
 
         String verificationCode = UUID.randomUUID().toString();
         customer.setVerificationCode(verificationCode);
 
-        NotificationDTO emailDTO = new NotificationDTO();
+        NotificationRequest emailDTO = new NotificationRequest();
         emailDTO.setSubject("Nalog uspešno kreiran");
         emailDTO.setEmail(customer.getEmail());
         emailDTO.setMessage("Vaš nalog je uspešno kreiran. Kliknite na sledeći link da biste postavili lozinku: "
@@ -164,6 +137,8 @@ public class CustomerService {
 
         // Saving the customer in the database gives it an ID, which can be used to generate the set-password token
         customer = customerRepository.save(customer);
+
+        jmsTemplate.convertAndSend(destinationAccount, messageHelper.createTextMessage(new CreateAccountDTO(customerDTO.getAccountInfo(), customer.getId())));
 
         setPasswordService.saveSetPasswordRequest(verificationCode, customer.getId());
 
@@ -182,28 +157,28 @@ public class CustomerService {
             @ApiResponse(responseCode = "200", description = "Customer updated successfully"),
             @ApiResponse(responseCode = "404", description = "Customer not found")
     })
-    public Optional<Customer> updateCustomer(Long id, CustomerDTO customerDTO) {
+    public Optional<Customer> updateCustomer(Long id, UpdateCustomerRequest customerDTO) {
         return customerRepository.findById(id).map(customer -> {
-            if (customerDTO.getIme() != null) {
-                customer.setFirstName(customerDTO.getIme());
+            if (customerDTO.getFirstName() != null) {
+                customer.setFirstName(customerDTO.getFirstName());
             }
-            if (customerDTO.getPrezime() != null) {
-                customer.setLastName(customerDTO.getPrezime());
+            if (customerDTO.getLastName() != null) {
+                customer.setLastName(customerDTO.getLastName());
             }
-            if (customerDTO.getDatum_rodjenja() != null) {
-                customer.setBirthDate(Long.parseLong(customerDTO.getDatum_rodjenja()));
+            if (customerDTO.getBirthDate() != null) {
+                customer.setBirthDate(customerDTO.getBirthDate());
             }
-            if (customerDTO.getPol() != null) {
-                customer.setGender(customerDTO.getPol().equalsIgnoreCase("M") ? Gender.MALE : Gender.FEMALE);
+            if (customerDTO.getGender() != null) {
+                customer.setGender(customerDTO.getGender());
             }
             if (customerDTO.getEmail() != null) {
                 customer.setEmail(customerDTO.getEmail());
             }
-            if (customerDTO.getBroj_telefona() != null) {
-                customer.setPhoneNumber(customerDTO.getBroj_telefona());
+            if (customerDTO.getPhoneNumber() != null) {
+                customer.setPhoneNumber(customerDTO.getPhoneNumber());
             }
-            if (customerDTO.getAdresa() != null) {
-                customer.setAddress(customerDTO.getAdresa());
+            if (customerDTO.getAddress() != null) {
+                customer.setAddress(customerDTO.getAddress());
             }
 
             String verificationCode = UUID.randomUUID().toString();
@@ -215,16 +190,17 @@ public class CustomerService {
         });
     }
 
-    public void setPassword(SetPasswordDTO setPasswordDTO) {
-        var customer = customerRepository.findByVerificationCode(setPasswordDTO.getCode());
-        if (customer.isEmpty())
+    public void setPassword(SetPasswordRequest setPasswordRequest) {
+        var customerOptional = customerRepository.findByVerificationCode(setPasswordRequest.getToken());
+        if (customerOptional.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
+        var customer = customerOptional.get();
         var salt = generateSalt();
-        var hashed = passwordEncoder.encode(setPasswordDTO.getPassword() + salt);
-        customer.get().setPassword(hashed);
-        customer.get().setSaltPassword(salt);
-        customer.get().setVerificationCode(null);
-        customerRepository.save(customer.get());
+        var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
+        customer.setPassword(hashed);
+        customer.setSaltPassword(salt);
+        customer.setVerificationCode(null);
+        customerRepository.save(customer);
     }
 
     /**

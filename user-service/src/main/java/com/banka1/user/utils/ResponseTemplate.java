@@ -39,7 +39,7 @@ public final class ResponseTemplate {
      * @param error Greška pri obrađivanju zahteva ili <code>null</code> ako nije bilo greške.
      * @return {@link ResponseEntity} napravljen po specificiranom template-u.
      */
-    public static ResponseEntity<?> create(ResponseEntity.BodyBuilder fromBuilder, boolean success, Map<?, ?> data, String error) {
+    public static ResponseEntity<?> create(ResponseEntity.BodyBuilder fromBuilder, boolean success, Object data, String error) {
         if(success) {
             return fromBuilder.body(Map.of(
                 "success", true,

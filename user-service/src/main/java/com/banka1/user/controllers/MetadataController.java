@@ -56,7 +56,7 @@ public class MetadataController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",
             content = @Content(mediaType = "application/json",
-            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"list\": [ \"Radnik\", \"HR\", \"...\" ] } }"))
+            examples = @ExampleObject(value = "{ \"success\": true, \"data\": { \"list\": [ \"WORKER\", \"HR\", \"...\" ] } }"))
         )
     })
     public ResponseEntity<?> getAllPositions() {

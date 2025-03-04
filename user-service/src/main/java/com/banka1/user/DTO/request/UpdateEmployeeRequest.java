@@ -5,10 +5,8 @@ import com.banka1.user.model.helper.Gender;
 import com.banka1.user.model.helper.Position;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Data
-public class UpdateEmployeeDto {
+public class UpdateEmployeeRequest {
     private String firstName;
     private String lastName;
     private String phoneNumber;

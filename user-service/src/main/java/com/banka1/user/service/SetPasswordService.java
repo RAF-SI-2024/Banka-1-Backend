@@ -1,7 +1,7 @@
 package com.banka1.user.service;
 
 
-import com.banka1.user.DTO.request.SetPasswordDTO;
+import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.model.SetPassword;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.repository.SetPasswordRepository;
@@ -42,10 +42,10 @@ public class SetPasswordService {
 	}
 
 
-	public void setPassword(SetPasswordDTO dto) {
+	public void setPassword(SetPasswordRequest dto) {
 		log.debug("SetPassword called");
 
-		var setRequest = setPasswordRepository.findByToken(dto.getCode());
+		var setRequest = setPasswordRepository.findByToken(dto.getToken());
 		if (setRequest.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token nije pronađen.");
 		log.debug("Token valid");
 		var setPassword = setRequest.get();

@@ -1,6 +1,5 @@
 package com.banka1.user.repository;
 
-import com.banka1.user.model.Employee;
 import com.banka1.user.model.ResetPassword;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

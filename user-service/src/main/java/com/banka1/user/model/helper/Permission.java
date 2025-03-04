@@ -1,5 +1,6 @@
 package com.banka1.user.model.helper;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 @Getter
@@ -23,6 +24,7 @@ public enum Permission {
     }
 
     @Override
+    @JsonValue
     public String toString() {
         return getPermission();
     }
