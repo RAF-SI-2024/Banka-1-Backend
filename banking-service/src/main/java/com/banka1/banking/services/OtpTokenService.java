@@ -28,7 +28,7 @@ public class OtpTokenService {
         otpToken.setExpirationTime(System.currentTimeMillis() + (5*60*1000));
         otpToken.setUsed(false);
 
-        otpTokenRepository.save(otpToken);
+        otpTokenRepository.saveAndFlush(otpToken);
         return otpCode;
     }
 

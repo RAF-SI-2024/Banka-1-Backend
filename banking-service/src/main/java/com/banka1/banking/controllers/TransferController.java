@@ -37,7 +37,7 @@ public class TransferController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Interni prenos uspešno kreiran",
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, \"message\": \"Interni prenos uspešno kreiran.\" }"))
+                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Interni prenos uspešno kreiran.\", \n \t \"transferId\": 12345 \n} \n}"))
             ),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
                     content = @Content(mediaType = "application/json",
@@ -60,13 +60,13 @@ public class TransferController {
                         false, null, "Nevalidni podaci ili nedovoljno sredstava.");
             }
 
-            transferService.createInternalTransfer(transferDTO);
+            Long transferId = transferService.createInternalTransfer(transferDTO);
 
 //            Long fromAccountId = transferDTO.getFromAccountId();
 //            Long toAccountId = transferDTO.getToAccountId();
 //            Double amount = transferDTO.getAmount();
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos uspešno kreiran."),null);
+            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos uspešno kreiran.","transferId",transferId),null);
 
 
         } catch (Exception e) {
@@ -83,7 +83,7 @@ public class TransferController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Prenos novca uspešno kreiran",
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, \"message\": \"Prenos novca uspešno kreiran.\" }"))
+                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Transfer novca uspešno kreiran.\", \n \t \"transferId\": 12345 \n} \n}"))
             ),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
                     content = @Content(mediaType = "application/json",
@@ -115,13 +115,13 @@ public class TransferController {
                         false, null, "Nevalidni podaci ili nedovoljno sredstava.");
             }
 
-            transferService.createMoneyTransfer(transferDTO);
+            Long transferId = transferService.createMoneyTransfer(transferDTO);
 
 //            Long fromAccountId = transferDTO.getFromAccountId();
 //            Long toAccountId = transferDTO.getToAccountId();
 //            Double amount = transferDTO.getAmount();
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Prenos novca uspešno kreiran."),null);
+            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Transfer novca uspešno kreiran.","transferId",transferId),null);
 
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);

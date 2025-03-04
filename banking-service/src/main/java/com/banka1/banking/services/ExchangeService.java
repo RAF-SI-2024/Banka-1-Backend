@@ -62,7 +62,7 @@ public class ExchangeService {
         Account fromAccount = fromAccountOtp.get();
         Account toAccount = toAccountOtp.get();
 
-        if (fromAccount.getCurrency().equals(toAccount.getCurrency())){
+        if (fromAccount.getCurrencyType().equals(toAccount.getCurrencyType())){
             return false;
         }
 
@@ -73,27 +73,27 @@ public class ExchangeService {
         return true;
     }
 
-    public void createExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO){
+    public Long createExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO) {
 
         Optional<Account> fromAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountFrom());
         Optional<Account> toAccountDTO = accountRepository.findById(exchangeMoneyTransferDTO.getAccountTo());
 
-        if (fromAccountDTO.isPresent() && toAccountDTO.isPresent()){
+        if (fromAccountDTO.isPresent() && toAccountDTO.isPresent()) {
 
             Account fromAccount = fromAccountDTO.get();
             Account toAccount = toAccountDTO.get();
 
             // PROVERITI DA LI SE VALUTE SALJU U DTO
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrency())
+            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrency())
+            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
                     .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
             CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
 
-            if (customerData == null ) {
+            if (customerData == null) {
                 throw new IllegalArgumentException("Korisnik nije pronađen");
             }
 
@@ -111,7 +111,7 @@ public class ExchangeService {
             transfer.setToCurrency(toCurrency);
             transfer.setCreatedAt(System.currentTimeMillis());
 
-            transferRepository.save(transfer);
+            transferRepository.saveAndFlush(transfer);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -126,9 +126,11 @@ public class ExchangeService {
             emailDto.setLastName(lastName);
             emailDto.setType("email");
 
-            jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+            jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDto));
+            return transfer.getId();
         }
 
+        return null;
     }
 
 }

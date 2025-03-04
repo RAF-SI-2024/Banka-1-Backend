@@ -37,7 +37,7 @@ public class ExchangeController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Interni prenos sa konverzijom uspešno izvršen",
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, \"message\": \"Interni prenos sa konverzijom uspešno izvršen.\" }"))
+                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Interni prenos sa konverzijom uspešno izvršen.\", \n \t \"transferId\": 12345 \n} \n}"))
             ),
             @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
                     content = @Content(mediaType = "application/json",
@@ -53,15 +53,16 @@ public class ExchangeController {
                             examples = @ExampleObject(value = "{ \"fromAccountId\": 1, \"toAccountId\": 2, \"amount\": 500.0, \"fromCurrency\": \"EUR\", \"toCurrency\": \"USD\" }"))
             ) ExchangeMoneyTransferDTO exchangeMoneyTransferDTO) {
 
+        // PROVERITI DA LI SE VALUTE SALJU U DTO
         try {
             if(!exchangeService.validateExchangeTransfer(exchangeMoneyTransferDTO)){
                 return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST),
                         false,null,"Nevalidni podaci ili nedovoljno sredstava.");
             }
 
-            exchangeService.createExchangeTransfer(exchangeMoneyTransferDTO);
+            Long transferId = exchangeService.createExchangeTransfer(exchangeMoneyTransferDTO);
 
-            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos sa konverzijom uspesno izvršen."),null);
+            return ResponseTemplate.create(ResponseEntity.ok(),true, Map.of("message","Interni prenos sa konverzijom uspesno izvršen.","transferId",transferId),null);
 
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
