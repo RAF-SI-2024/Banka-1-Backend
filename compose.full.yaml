@@ -1,0 +1,165 @@
+# The full docker compose file for the project.
+# Use it if you want to run the whole backend in one go, in docker.
+# For backend development, I'd recommend using compose.dev.yaml instead.
+# Run it with:
+# docker compose -f compose.full.yaml up (-d for detached mode)
+
+# You can also use this compose file for development, just stop the services you want to work on, for example:
+# docker compose -f compose.full.yaml stop user-service
+
+# Note: ports shouldn't be exposed in production
+
+
+services:
+  eureka:
+    image: 'eureka:0.0.1-SNAPSHOT'
+    ports:
+      - '8761:8761'
+    networks:
+      - eureka-net
+    environment:
+      #    If you want colored output, uncomment the following line:
+      - SPRING_OUTPUT_ANSI_ENABLED=always
+  gateway:
+    image: 'api-gateway:0.0.1-SNAPSHOT'
+
+    ports:
+      - '8080:8080'
+    networks:
+      - eureka-net
+      - user-net
+      - banking-net
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+      #    If you want colored output, uncomment the following line:
+      - SPRING_OUTPUT_ANSI_ENABLED=always
+    depends_on:
+      - eureka
+  #  TODO: Change message broker to use RabbitMQ
+  message-broker:
+    image: 'apache/activemq-classic:latest'
+    ports:
+      - '61616:61616'
+    volumes:
+      - 'activemq_data:/opt/activemq/data'
+    networks:
+      - broker-net
+  notification-service:
+    image: 'notification-service:0.0.1-SNAPSHOT'
+    networks:
+      - broker-net
+      - notification-net
+    depends_on:
+      - notification-db
+      - gateway
+      - message-broker
+    environment:
+      - 'SPRING_PROFILES_ACTIVE='
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://notification-db:5432/notification_db
+      - SPRING_DATASOURCE_USERNAME=notification_user
+      - SPRING_DATASOURCE_PASSWORD=notification_password
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - SPRING_H2_CONSOLE_ENABLED=false
+#     AMQ_URL and AMQ_QUERYPARAMETERS are joined into SPRING_ACTIVEMQ_BROKER_URL, so I just changed that one.
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
+      #    If you want colored output, uncomment the following line:
+      - SPRING_OUTPUT_ANSI_ENABLED=always
+# Note: This isn't necessary
+  notification-db:
+    image: 'postgres:17-alpine'
+    networks:
+      - notification-net
+    environment:
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_password
+      POSTGRES_DB: notification_db
+    volumes:
+      - 'notification_db_data:/var/lib/postgresql/data/'
+  banking-service:
+    image: 'banking-service:0.0.1-SNAPSHOT'
+    ports:
+      - '8082:8082'
+    networks:
+      - broker-net
+      - banking-net
+      - eureka-net
+    depends_on:
+      - banking-db
+      - message-broker
+      - gateway
+    environment:
+      - 'SPRING_PROFILES_ACTIVE='
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://banking-db:5432/banking_db
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=banking_user
+      - SPRING_DATASOURCE_PASSWORD=banking_password
+      - SPRING_H2_CONSOLE_ENABLED=false
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=INFO
+      #    If you want colored output, uncomment the following line:
+      - SPRING_OUTPUT_ANSI_ENABLED=always
+  banking-db:
+    image: 'postgres:17-alpine'
+    networks:
+      - banking-net
+    environment:
+      POSTGRES_USER: banking_user
+      POSTGRES_PASSWORD: banking_password
+      POSTGRES_DB: banking_db
+    volumes:
+      - 'banking_db_data:/var/lib/postgresql/data/'
+  user-service:
+    image: 'user-service:0.0.1-SNAPSHOT'
+    ports:
+      - '8081:8081'
+    networks:
+      - broker-net
+      - user-net
+      - eureka-net
+    depends_on:
+      - user-db
+      - message-broker
+      - gateway
+    environment:
+      - 'SPRING_PROFILES_ACTIVE='
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/user_service_db
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=user_service_user
+      - SPRING_DATASOURCE_PASSWORD=user_service_password
+      - SPRING_H2_CONSOLE_ENABLED=false
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
+      - FRONTEND_URL=http://localhost:4200
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:8761/eureka
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=INFO
+      #    If you want colored output, uncomment the following line:
+      - SPRING_OUTPUT_ANSI_ENABLED=always
+  user-db:
+    image: 'postgres:17-alpine'
+    networks:
+      - user-net
+    environment:
+      POSTGRES_USER: user_service_user
+      POSTGRES_PASSWORD: user_service_password
+      POSTGRES_DB: user_service_db
+    volumes:
+      - 'user_db_data:/var/lib/postgresql/data/'
+volumes:
+    activemq_data: null
+    notification_db_data: null
+    banking_db_data: null
+    user_db_data: null
+networks:
+  broker-net: null
+  notification-net: null
+  user-net: null
+  eureka-net: null
+  banking-net: null

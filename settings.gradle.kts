@@ -7,5 +7,4 @@ include(
     "api-gateway",
     "common",
     "eureka",
-    "message-brooker-service"
 )

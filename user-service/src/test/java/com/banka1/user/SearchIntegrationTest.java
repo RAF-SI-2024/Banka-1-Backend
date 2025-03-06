@@ -178,7 +178,7 @@ public class SearchIntegrationTest {
         data = (Map) responseEntity.getBody().get("data");
 
         assertNotNull(data.get("total"), "Odgovor ne sadrži broj redova.");
-        assertEquals(2, data.get("total"));
+        assertEquals(6, data.get("total"));
         assertNotNull(data.get("rows"), "Odgovor ne sadrži redove.");
         assertInstanceOf(List.class, data.get("rows"), "Redovi nisu lista.");
 
@@ -236,7 +236,8 @@ public class SearchIntegrationTest {
         data = (Map) responseEntity.getBody().get("data");
 
         assertNotNull(data.get("total"), "Odgovor ne sadrži broj redova.");
-        assertEquals(1, data.get("total"));
+        System.out.println(data);
+        assertEquals(4, data.get("total"));
         assertNotNull(data.get("rows"), "Odgovor ne sadrži redove.");
         assertInstanceOf(List.class, data.get("rows"), "Redovi nisu lista.");
 

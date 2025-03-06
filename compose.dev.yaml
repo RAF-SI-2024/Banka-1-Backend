@@ -1,0 +1,43 @@
+# The minimal docker compose file which should be used for backend development
+# Run it with:
+# docker compose -f compose.dev.yaml up (-d for detached mode)
+
+# Contains only the backend infrastructure services:
+# - ActiveMQ (message broker), to be replaced with RabbitMQ
+# - Bank Service PostgreSQL database
+# - User Service PostgreSQL database
+
+
+# If someone checks this, perhaps Eureka can also be added here, but I can't be bothered right now, it's 3:40AM.
+# (The actual eureka image, not the one in this project)
+services:
+  dev-message-broker:
+    image: 'apache/activemq-classic:latest'
+    ports:
+      - '61616:61616'
+    volumes:
+      - 'dev_activemq_data:/opt/activemq/data'
+  dev-banking-db:
+    image: 'postgres:17-alpine'
+    ports:
+        - '5433:5432'
+    environment:
+      POSTGRES_USER: banking_service_user
+      POSTGRES_PASSWORD: banking_service_password
+      POSTGRES_DB: banking_db
+    volumes:
+      - 'dev_banking_db_data:/var/lib/postgresql/data/'
+  dev-user-db:
+    image: 'postgres:17-alpine'
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_USER: user_service_user
+      POSTGRES_PASSWORD: user_service_password
+      POSTGRES_DB: user_service_db
+    volumes:
+      - 'dev_user_db_data:/var/lib/postgresql/data/'
+volumes:
+  dev_activemq_data: null
+  dev_banking_db_data: null
+  dev_user_db_data: null
