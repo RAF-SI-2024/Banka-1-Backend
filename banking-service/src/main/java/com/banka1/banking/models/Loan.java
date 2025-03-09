@@ -62,6 +62,8 @@ public class Loan {
     @Column(nullable = false)
     private Double remainingAmount;
 
+    @Column
+    private String loanReason;
     @JoinColumn(name = "account_id", nullable = false)
     @ManyToOne
     private Account account;
