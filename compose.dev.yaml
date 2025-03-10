@@ -3,14 +3,34 @@
 # docker compose -f compose.dev.yaml up (-d for detached mode)
 
 # Contains only the backend infrastructure services:
+# - Caddy (proxy), possibly useful.
 # - ActiveMQ (message broker), to be replaced with RabbitMQ
 # - Bank Service PostgreSQL database
 # - User Service PostgreSQL database
 
 
-# If someone checks this, perhaps Eureka can also be added here, but I can't be bothered right now, it's 3:40AM.
-# (The actual eureka image, not the one in this project)
 services:
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - user-net
+      - banking-net
+      - notification-net
+      - proxy-net
+      - broker-net
+    # Required on linux for host.docker.internal to be accessible
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - user-service
+      - banking-service
   dev-message-broker:
     image: 'apache/activemq-classic:latest'
     ports:

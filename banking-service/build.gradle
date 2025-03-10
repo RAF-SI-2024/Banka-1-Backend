@@ -46,7 +46,6 @@ dependencies {
     implementation 'javax.jms:javax.jms-api:2.0.1'
     implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     implementation project(":common")
 

@@ -4,7 +4,5 @@ include(
     "user-service",
     "notification-service",
     "banking-service",
-    "api-gateway",
     "common",
-    "eureka",
 )

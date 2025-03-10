@@ -2,6 +2,20 @@
 
 
 
+## Docker Compose
+
+This project uses docker compose for development. There are two compose files, `compose.dev.yaml` and `compose.full.yaml`.
+
+### Caddy
+Caddy is used as the reverse proxy for both the frontend and backend. 
+
+#### HTTPS
+Caddy automatically creates self-signed TLS certificates which might cause issues when testing).  
+To fix this, when running Postman (or similar), follow the instructions [here](https://caddyserver.com/docs/running#local-https-with-docker).  
+Browsers will show a self-signed certificate warning when accessing the frontend.  
+I don't know a way to "fix" this warning. It can be safely ignored.
+
+
 ## For frontend developers
 
 To run this project, you need to have Docker installed.
@@ -30,8 +44,6 @@ docker compose -f compose.dev.yaml up -d
 
 To run the services run:
 ```shell
-./gradlew eureka:bootRun
-./gradlew api-gateway:bootRun
 ./gradlew notification-service:bootRun
 ./gradlew banking-service:bootRun
 ./gradlew user-service:bootRun
