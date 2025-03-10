@@ -2,6 +2,7 @@ package com.banka1.banking.controllers;
 import com.banka1.banking.aspect.LoanAuthorization;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
+import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
@@ -224,5 +225,48 @@ public class LoanController {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
     }
+    @GetMapping("/admin/{user_id}/installments")
+    @Operation(summary = "Pregled svih rata korisnika",
+            description = "Pregled svih rata za sve kredite korisnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista rata korisnika."),
+            @ApiResponse(responseCode = "404", description = "Nema pronađenih rata za korisnika.")
+    })
+    @LoanAuthorization(employeeOnlyOperation = true)
+    public ResponseEntity<?> getUserInstallments(@PathVariable("user_id") Long userId) {
+        try {
+            List<Installment> installments = loanService.getUserInstallments(userId);
+            if (installments.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @GetMapping("/installments")
+    @Operation(summary = "Pregled svih rata korisnika",
+            description = "Pregled svih rata koje su vezane za kredite korisnika")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista rata korisnika."),
+            @ApiResponse(responseCode = "404", description = "Nema pronađenih rata za korisnika.")
+    })
+    public ResponseEntity<?> getUserInstallments(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            Long userId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
+            List<Installment> installments = loanService.getUserInstallments(userId);
+            if (installments.isEmpty()) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NO_DATA.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
 
 }

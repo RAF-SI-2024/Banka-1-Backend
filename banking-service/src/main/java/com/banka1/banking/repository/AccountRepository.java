@@ -4,6 +4,7 @@ import com.banka1.banking.models.Account;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.List;
@@ -15,4 +16,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     List<Account> findByOwnerID(Long ownerId);
     Optional<Account> findById(Long accountId);
     Optional<Account> findByAccountNumber(String accountNumber);
+    @Query("SELECT a FROM Account a WHERE a.type = 'BANK'")
+    Account findBankAccount();
 }
