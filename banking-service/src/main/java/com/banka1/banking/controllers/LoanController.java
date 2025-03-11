@@ -4,7 +4,7 @@ import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
-import com.banka1.banking.repository.InstallmentsRepository;
+import com.banka1.banking.repository.InstallmentRepository;
 import com.banka1.banking.repository.LoanRepository;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
@@ -35,7 +35,7 @@ public class LoanController {
     @Autowired
     private LoanRepository loanRepository;
     @Autowired
-    private InstallmentsRepository installmentsRepository;
+    private InstallmentRepository installmentRepository;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit",

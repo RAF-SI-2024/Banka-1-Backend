@@ -1,11 +1,13 @@
 package com.banka1.banking.services;
 
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
 import com.banka1.banking.repository.AccountRepository;
+import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.repository.TransferRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class TransactionService {
     private final TransferRepository transferRepository;
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final CurrencyRepository currencyRepository;
 
     @Transactional
     public String processTransfer(Long transferId) {
@@ -177,5 +180,27 @@ public class TransactionService {
         List<Account> accounts = accountRepository.findByOwnerID(userId);
         List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
         return transactions;
+    }
+
+    public Boolean processInstallment(Account customerAccount, Account bankAccount, Installment installment) {
+        Double amount = installment.getAmount();
+            if (customerAccount.getBalance().compareTo(amount) >= 0) {
+//                customerAccount.withdraw(amount);
+//                bankAccount.deposit(amount);
+                Transaction transaction = new Transaction();
+                transaction.setFromAccountId(customerAccount);
+                transaction.setToAccountId(bankAccount);
+                transaction.setAmount(amount);
+                transaction.setCurrency(currencyRepository.getByCode(customerAccount.getCurrencyType()));
+                transaction.setTimestamp(Instant.now().getEpochSecond());
+                transaction.setDescription("Installment for loan " + installment.getLoan());
+                transaction.setLoanId(installment.getLoan().getId());
+
+                transactionRepository.save(transaction);
+                accountRepository.save(customerAccount);
+                accountRepository.save(bankAccount);
+                return true;
+            }
+        return false;
     }
 }

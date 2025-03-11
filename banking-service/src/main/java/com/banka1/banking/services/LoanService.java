@@ -12,19 +12,15 @@ import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
-import com.banka1.banking.repository.InstallmentsRepository;
+import com.banka1.banking.repository.InstallmentRepository;
 import com.banka1.banking.repository.LoanRepository;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,9 +36,9 @@ public class LoanService {
     private final String destinationEmail;
     private final AccountRepository accountRepository;
     private final UserServiceCustomer userServiceCustomer;
-    private final InstallmentsRepository installmentsRepository;
+    private final InstallmentRepository installmentRepository;
 
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository) {
+    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentRepository installmentRepository) {
         this.loanRepository = loanRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -50,7 +46,7 @@ public class LoanService {
         this.destinationEmail = destinationEmail;
         this.accountRepository = accountRepository;
         this.userServiceCustomer = userServiceCustomer;
-        this.installmentsRepository = installmentsRepository;
+        this.installmentRepository = installmentRepository;
     }
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
@@ -148,7 +144,7 @@ public class LoanService {
         for (Account acc : accounts) {
             List<Loan> loans = loanRepository.getLoansByAccount(acc);
             for (Loan loan : loans) {
-                installments.addAll(installmentsRepository.getByLoanID(loan.getId()));
+                installments.addAll(installmentRepository.getByLoanId(loan.getId()));
             }
         }
         return installments;
@@ -158,7 +154,7 @@ public class LoanService {
                 orElseThrow(() -> new RuntimeException("Kredit nije pronadjen"));
 
         if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
-        Integer paidInstallments = installmentsRepository.countByLoan(loan);
+        Integer paidInstallments = installmentRepository.countByLoan(loan);
         Integer numberOfInstallments = loan.getNumberOfInstallments()-paidInstallments;
         return numberOfInstallments;
     }
@@ -169,43 +165,45 @@ public class LoanService {
         return accountRepository.findByOwnerIDAndCurrencyType(ownerId, currencyType);
     }
 
-
+//    @Autowired
+//    TransactionRepository transactionRepository;
+//    @Autowired
+//    TransactionService transactionService;
+//
 //    @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
 //    public void processLoanPayments() {
 //        processDueInstallments();
 //    }
-
+//
 //    @Transactional
 //    public void processDueInstallments() {
-//        List<Installment> dueInstallments = installmentsRepository.getDueInstallments(LocalDate.now());
+//        List<Installment> dueInstallments = installmentsRepository.getDueInstallments(Instant.now().getEpochSecond());
 //
 //        for (Installment installment : dueInstallments) {
 //            Account customerAccount = installment.getLoan().getAccount();
-//            Account bankAccount = accountRepository.findBankAccount();
+//            Account bankAccount = getBankAccount(customerAccount.getCurrencyType());
 //
-//            Double amount = installment.getAmount();
+//            Boolean successfull = transactionService.processInstallment(customerAccount, bankAccount, installment);
 //
-//            if (customerAccount.getBalance().compareTo(amount) >= 0) {
+//            if (successfull){
 //                // Naplata uspešna
-//                customerAccount.withdraw(amount);
-//                bankAccount.deposit(amount);
-//                installment.setPaid(true);
-//                installment.setPaymentDate(LocalDate.now());
-//                installment.setAttemptCount(installment.getAttemptCount() + 1);
-//            } else {
-//                // Naplata nije uspela
-//                if (installment.getAttemptCount() == 0) {
-//                    installment.setRetryDate(LocalDate.now().plusDays(3)); // Pokušaj ponovo za 72h
-//                } else {
-//                    installment.setInterestRate(installment.getInterestRate().add(new BigDecimal("0.0005"))); // +0.05%
-//                    installment.setRetryDate(LocalDate.now().plusDays(3));
-//                }
+//                installment.setIsPaid(true);
+//                installment.setActualDueDate(Instant.now().getEpochSecond());
 //                installment.setAttemptCount(installment.getAttemptCount() + 1);
 //            }
+//            else {
+//                // Naplata nije uspela
+//                installment.setIsPaid(false);
+//                if (installment.getAttemptCount() != 0) {
+//                    installment.setInterestRate(installment.getInterestRate() + 0.0005); // +0.05%
+//                }
 //
-//            installmentRepository.save(installment);
-//            accountRepository.save(customerAccount);
-//            accountRepository.save(bankAccount);
+//                installment.setRetryDate(Instant.now().plus(Duration.ofDays(3)).getEpochSecond());
+//                installment.setAttemptCount(installment.getAttemptCount() + 1);
+//
+//            }
+//
+//            installmentsRepository.save(installment);
 //        }
 //    }
 }

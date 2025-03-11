@@ -7,14 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.util.List;
 
 
 @Repository
-public interface InstallmentsRepository extends JpaRepository {
-    List<Installment> getByLoanID(Long loanID);
-    @Query("SELECT i FROM Installment i WHERE i.expectedDueDate <= :today AND i.isPaid = false")
-    List<Installment> getDueInstallments(@Param("today") LocalDate today);
+public interface InstallmentRepository extends JpaRepository<Installment, Long> {
+    List<Installment> getByLoanId(Long loanID);
+    @Query("SELECT i FROM Installment i WHERE (i.expectedDueDate <= :today AND i.isPaid = false)" +
+            " OR (i.retryDate <= :today AND i.isPaid = false)")
+    List<Installment> getDueInstallments(@Param("today") Long today);
     Integer countByLoan(Loan loan);
 }
