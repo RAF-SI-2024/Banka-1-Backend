@@ -13,17 +13,13 @@ import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.InstallmentsRepository;
 import com.banka1.banking.repository.LoanRepository;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -147,7 +143,7 @@ public class LoanService {
         for (Account acc : accounts) {
             List<Loan> loans = loanRepository.getLoansByAccount(acc);
             for (Loan loan : loans) {
-                installments.addAll(installmentsRepository.getByLoanID(loan.getId()));
+                installments.addAll(installmentsRepository.getByLoanId(loan.getId()));
             }
         }
         return installments;

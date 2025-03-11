@@ -54,7 +54,6 @@ services:
       - SPRING_DATASOURCE_USERNAME=notification_user
       - SPRING_DATASOURCE_PASSWORD=notification_password
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
       - SPRING_H2_CONSOLE_ENABLED=false
 #     AMQ_URL and AMQ_QUERYPARAMETERS are joined into SPRING_ACTIVEMQ_BROKER_URL, so I just changed that one.
@@ -87,10 +86,9 @@ services:
       - 'SPRING_PROFILES_ACTIVE='
       - SPRING_DATASOURCE_URL=jdbc:postgresql://banking-db:5432/banking_db
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - SPRING_DATASOURCE_USERNAME=banking_user
-      - SPRING_DATASOURCE_PASSWORD=banking_password
+      - SPRING_DATASOURCE_USERNAME=banking_service_user
+      - SPRING_DATASOURCE_PASSWORD=banking_service_password
       - SPRING_H2_CONSOLE_ENABLED=false
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
       - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
@@ -104,8 +102,8 @@ services:
     networks:
       - banking-net
     environment:
-      POSTGRES_USER: banking_user
-      POSTGRES_PASSWORD: banking_password
+      POSTGRES_USER: banking_service_user
+      POSTGRES_PASSWORD: banking_service_password
       POSTGRES_DB: banking_db
     volumes:
       - 'banking_db_data:/var/lib/postgresql/data/'
@@ -127,7 +125,6 @@ services:
       - SPRING_DATASOURCE_USERNAME=user_service_user
       - SPRING_DATASOURCE_PASSWORD=user_service_password
       - SPRING_H2_CONSOLE_ENABLED=false
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
       - SPRING_ACTIVEMQ_BROKER_URL=tcp://message-broker:61616?jms.prefetchPolicy.all=1&jms.redeliveryPolicy.maximumRedeliveries=0
       - FRONTEND_URL=https://localhost

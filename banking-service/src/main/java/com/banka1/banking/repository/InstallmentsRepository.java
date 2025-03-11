@@ -12,8 +12,8 @@ import java.util.List;
 
 
 @Repository
-public interface InstallmentsRepository extends JpaRepository {
-    List<Installment> getByLoanID(Long loanID);
+public interface InstallmentsRepository extends JpaRepository<Installment, Long> {
+    List<Installment> getByLoanId(Long loanID);
     @Query("SELECT i FROM Installment i WHERE i.expectedDueDate <= :today AND i.isPaid = false")
     List<Installment> getDueInstallments(@Param("today") LocalDate today);
     Integer countByLoan(Loan loan);
