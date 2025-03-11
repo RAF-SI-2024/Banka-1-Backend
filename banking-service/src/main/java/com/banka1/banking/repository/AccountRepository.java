@@ -1,6 +1,7 @@
 package com.banka1.banking.repository;
 
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.helper.CurrencyType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     List<Account> findByOwnerID(Long ownerId);
     Optional<Account> findById(Long accountId);
     Optional<Account> findByAccountNumber(String accountNumber);
+
+    Account findByOwnerIdAndCurrencyType(Long ownerId, CurrencyType currencyType);
 }

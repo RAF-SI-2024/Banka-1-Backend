@@ -7,6 +7,7 @@ import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
@@ -125,5 +126,11 @@ public class LoanService {
 
     public List<Loan> getAllLoans() {
         return loanRepository.findAll();
+    }
+
+    public Account getBankAccount(CurrencyType currencyType) {
+        Long ownerId = 1L; // The bank's owner ID is always 1
+
+        return accountRepository.findByOwnerIdAndCurrencyType(ownerId, currencyType);
     }
 }
