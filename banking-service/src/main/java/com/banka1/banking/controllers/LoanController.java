@@ -4,6 +4,8 @@ import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.repository.InstallmentsRepository;
+import com.banka1.banking.repository.LoanRepository;
 import com.banka1.banking.services.LoanService;
 import com.banka1.banking.services.implementation.AuthService;
 import com.banka1.banking.utils.ResponseMessage;
@@ -30,6 +32,10 @@ public class LoanController {
     private LoanService loanService;
     @Autowired
     private AuthService authService;
+    @Autowired
+    private LoanRepository loanRepository;
+    @Autowired
+    private InstallmentsRepository installmentsRepository;
 
     @PostMapping("/")
     @Operation(summary = "Kreiranje zahteva za kredit",
@@ -263,6 +269,29 @@ public class LoanController {
                         ResponseMessage.NO_DATA.toString());
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("installments", installments), null);
+        } catch (Exception e) {
+            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+        }
+    }
+
+    @GetMapping("/{loan_id}/remaining_installments")
+    @Operation(summary = "Broj preostalih rata za kredit",
+            description = "broj ukupnih rata - broj placenih rata")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "lista kredita."),
+            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+    })
+    public ResponseEntity<?> getRemainingInstallments(
+            @PathVariable("loan_id") Long loanId,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            Long ownerId = authService.parseToken(authService.getToken(authorization)).get("id", Long.class);
+            Integer num = loanService.calculateRemainingInstallments(ownerId, loanId);
+            if (num == null) {
+                return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null,
+                        ResponseMessage.NOT_THE_OWNER.toString());
+            }
+            return ResponseTemplate.create(ResponseEntity.ok(), true, Map.of("remaining_number", num), null);
         } catch (Exception e) {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }

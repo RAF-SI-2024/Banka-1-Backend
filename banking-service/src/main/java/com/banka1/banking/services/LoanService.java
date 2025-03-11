@@ -152,6 +152,15 @@ public class LoanService {
         }
         return installments;
     }
+    public Integer calculateRemainingInstallments(Long ownerId, Long loanId) {
+        Loan loan = loanRepository.findById(loanId).
+                orElseThrow(() -> new RuntimeException("Kredit nije pronadjen"));
+
+        if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
+        Integer paidInstallments = installmentsRepository.countByLoan(loan);
+        Integer numberOfInstallments = loan.getNumberOfInstallments()-paidInstallments;
+        return 0;
+    }
 
 //    @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
 //    public void processLoanPayments() {
