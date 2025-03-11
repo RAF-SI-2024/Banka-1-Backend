@@ -8,6 +8,7 @@ import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
@@ -159,8 +160,15 @@ public class LoanService {
         if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
         Integer paidInstallments = installmentsRepository.countByLoan(loan);
         Integer numberOfInstallments = loan.getNumberOfInstallments()-paidInstallments;
-        return 0;
+        return numberOfInstallments;
     }
+
+    public Account getBankAccount(CurrencyType currencyType) {
+        Long ownerId = 1L; // The bank's owner ID is always 1
+
+        return accountRepository.findByOwnerIDAndCurrencyType(ownerId, currencyType);
+    }
+
 
 //    @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
 //    public void processLoanPayments() {
