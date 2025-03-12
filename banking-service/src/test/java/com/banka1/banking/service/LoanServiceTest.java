@@ -59,6 +59,7 @@ public class LoanServiceTest {
 
         Loan loan = new Loan();
         loan.setLoanType(LoanType.CASH);
+        loan.setNumberOfInstallments(12);
 
         when(modelMapper.map(createLoanDTO, Loan.class)).thenReturn(loan);
 

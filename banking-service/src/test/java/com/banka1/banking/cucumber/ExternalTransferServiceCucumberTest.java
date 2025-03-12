@@ -59,9 +59,11 @@ public class ExternalTransferServiceCucumberTest {
         transfer.setAmount(200.0);
     }
 
-    @When("the transfer is processed")
-    public void the_transfer_is_processed() {
+    @When("the external transfer is processed")
+
+    public void the_external_transfer_is_processed() {
         try {
+            // FIXME: remove mocking when external transfers exist
             when(transferService.processExternalTransfer(anyLong())).thenAnswer(invocation -> {
                 double fee = 5.0; // Provizija
                 if (transfer.getAmount() + fee > fromAccount.getBalance()) {
