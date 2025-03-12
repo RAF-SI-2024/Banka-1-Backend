@@ -514,7 +514,25 @@ public class BootstrapData implements CommandLineRunner {
         loan.setLoanReason("Home renovation");
         loan.setAccount(jovanTekuci);
 
+        Loan loan1 = new Loan();
+        loan1.setLoanType(LoanType.CASH);
+        loan1.setCurrencyType(CurrencyType.RSD);
+        loan1.setInterestType(InterestType.FIXED);
+        loan1.setPaymentStatus(PaymentStatus.PENDING);
+        loan1.setNominalRate(5.5);
+        loan1.setEffectiveRate(6.0);
+        loan1.setLoanAmount(550000.0);
+        loan1.setDuration(24); // 24 months
+        loan1.setCreatedDate(System.currentTimeMillis());
+        loan1.setAllowedDate(System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000L)); // Allowed in 7 days
+        loan1.setMonthlyPayment(22000.0);
+        loan1.setNextPaymentDate(System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000)); // Next payment in a month
+        loan1.setRemainingAmount(500000.0);
+        loan1.setLoanReason("Home renovation, attempt 2");
+        loan1.setAccount(jovanTekuci);
+
         loanRepository.save(loan);
+        loanRepository.save(loan1);
 
         System.out.println("============== Data Loaded ==============");
     }

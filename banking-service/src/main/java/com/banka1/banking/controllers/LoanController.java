@@ -59,7 +59,7 @@ public class LoanController {
         }
 
         Map<String, Object> response = new HashMap<>();
-        response.put("broj racuna", newLoan.getId());
+        response.put("account_number", newLoan.getAccount().getId());
         response.put("message", "Kredit uspešno kreiran.\n");
 
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.CREATED), true, response, null);
