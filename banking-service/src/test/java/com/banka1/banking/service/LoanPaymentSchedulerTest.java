@@ -1,10 +1,9 @@
 package com.banka1.banking.service;
 
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Installment;
-import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.*;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
+import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.InstallmentsRepository;
 import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.banking.services.LoanService;
@@ -16,13 +15,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 
-import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,74 +30,168 @@ class LoanPaymentSchedulerTest {
     @Mock
     private AccountRepository accountRepository;
 
-    @InjectMocks
+    @Mock
     private TransactionService transactionService;
 
     @InjectMocks
-    private LoanService loanPaymentScheduler;
+    private LoanService loanService;
 
-    private Installment unpaidInstallment;
-    private Installment paidInstallment;
+    private Installment installment1;
+    private Installment installment2;
+    private Account userAccount;
+    private Account bankAccount;
+    private Loan loan;
 
     @BeforeEach
     void setUp() {
-        Account customerAccount = new Account();
-        customerAccount.setCurrencyType(CurrencyType.EUR);
-        customerAccount.setBalance(1000.0); // ✅ Dodaj balans da test prođe
+        userAccount = new Account();
+        userAccount.setBalance(5000.0);
+        userAccount.setCurrencyType(CurrencyType.AUD);
 
-        Account bankAccount = new Account();
-        bankAccount.setCurrencyType(CurrencyType.EUR);
+        bankAccount = new Account();
         bankAccount.setBalance(10000.0);
 
-        unpaidInstallment = new Installment();
-        unpaidInstallment.setLoan(new Loan());
-        unpaidInstallment.setAmount(500.0);
-        unpaidInstallment.getLoan().setAccount(customerAccount);
-        unpaidInstallment.setIsPaid(false);
-        unpaidInstallment.setAttemptCount(1);
-        unpaidInstallment.setInterestRate(0.05);
+        loan = new Loan();
+        loan.setLoanAmount(1000.0);
+        loan.setNumberOfInstallments(12);
+        loan.setAccount(userAccount);
 
-        paidInstallment = new Installment();
-        paidInstallment.setLoan(new Loan());
-        paidInstallment.setAmount(30.0);
-        paidInstallment.getLoan().setAccount(customerAccount);
-        paidInstallment.setIsPaid(true);
+        installment1 = new Installment();
+        installment1.setLoan(loan);
+        installment1.setInterestRate(5.0); // 5% interest
+        installment1.setAttemptCount(0);
+        installment1.setIsPaid(false);
 
-        when(installmentsRepository.getDueInstallments(anyLong()))
-                .thenReturn(Arrays.asList(unpaidInstallment, paidInstallment));
+        installment2 = new Installment();
+        installment2.setLoan(loan);
+        installment2.setInterestRate(5.0); // 5% interest
+        installment2.setAttemptCount(0);
+        installment2.setIsPaid(false);
+
     }
 
     @Test
-    void testProcessLoanPayments() {
-//        when(transactionService.processInstallment(any(), any(), any())).thenReturn(true);
+    void testProcessLoanPaymentsSuccess() {
+        when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Arrays.asList(installment1, installment2));
 
-        loanPaymentScheduler.processLoanPayments();
+        when(transactionService.processInstallment(any(), any(), any())).thenReturn(true);
 
-        // Verifikujemo da je metoda pozvana i da se pozvao `save` dva puta (jer imamo dva installment-a)
-        verify(installmentsRepository, times(1)).getDueInstallments(anyLong());
-        verify(installmentsRepository, times(2)).save(any(Installment.class));
+        loanService.processDueInstallments();
 
-        // Proveravamo da li je dug isplaćen
-        assertTrue(unpaidInstallment.getIsPaid(), "Unpaid installment should be marked as paid.");
+        assertTrue(installment1.getIsPaid());
+        assertTrue(installment2.getIsPaid());
+        assertNotNull(installment1.getActualDueDate());
+        assertNotNull(installment2.getActualDueDate());
+
+        verify(installmentsRepository, times(1)).save(installment1);
+        verify(installmentsRepository, times(1)).save(installment2);
     }
 
     @Test
-    void testProcessLoanPaymentsFailedTransaction() {
-        when(transactionService.processInstallment(any(), any(), any()))
-                .thenAnswer(invocation -> {
-                    Installment inst = invocation.getArgument(2);
-                    assertNotNull(inst.toString(), "Installment should not be null");
-                    assertNotNull(String.valueOf(inst.getAmount()), "Installment amount should not be null");
-                    return false; // Simuliramo neuspelu transakciju
-                });
-        loanPaymentScheduler.processLoanPayments();
+    void testProcessLoanPaymentsFailed() {
+        when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Arrays.asList(installment1, installment2));
 
-        // Verifikujemo da je metoda pozvana i da se pozvao `save` dva puta
-        verify(installmentsRepository, times(1)).getDueInstallments(anyLong());
-        verify(installmentsRepository, times(2)).save(any(Installment.class));
+        when(transactionService.processInstallment(any(), any(), any())).thenReturn(false);
 
-        // Proveravamo da li nije plaćen i da je retryDate podešen
-        assertFalse(unpaidInstallment.getIsPaid(), "Unpaid installment should not be marked as paid.");
-        assertNotNull(String.valueOf(unpaidInstallment.getRetryDate()), "Retry date should be set.");
+        loanService.processDueInstallments();
+
+        assertFalse(installment1.getIsPaid());
+        assertFalse(installment2.getIsPaid());
+        assertNotNull(installment1.getRetryDate());
+        assertNotNull(installment2.getRetryDate());
+
+        verify(installmentsRepository, times(1)).save(installment1);
+        verify(installmentsRepository, times(1)).save(installment2);
+    }
+
+    @Test
+    void testProcessDueInstallments_NoInstallmentsFound() {
+        when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Arrays.asList(null, null));
+
+        assertThrows(RuntimeException.class, () -> {
+            loanService.processDueInstallments();
+        });
+
+        when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Collections.emptyList());
+
+        assertThrows(RuntimeException.class, () -> {
+            loanService.processDueInstallments();
+        });
+
+        verify(installmentsRepository, never()).save(any());
+    }
+
+}
+
+@ExtendWith(MockitoExtension.class)
+class TransactionServiceTest {
+
+    @Mock
+    private TransactionRepository transactionRepository;
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private CurrencyRepository currencyRepository;
+
+    @InjectMocks
+    private TransactionService transactionService;
+
+    private Account userAccount;
+    private Account bankAccount;
+    private Loan loan;
+    private Installment installment;
+
+    @BeforeEach
+    void setUp() {
+        // Setup test data
+        userAccount = new Account();
+        userAccount.setBalance(5000.0);
+        userAccount.setCurrencyType(CurrencyType.AUD);
+
+        bankAccount = new Account();
+        bankAccount.setBalance(10000.0);
+
+        loan = new Loan();
+        loan.setLoanAmount(1000.0);
+        loan.setNumberOfInstallments(12);
+        loan.setAccount(userAccount);
+
+        installment = new Installment();
+        installment.setLoan(loan);
+        installment.setInterestRate(5.0);
+    }
+
+    @Test
+    void testProcessInstallment_Success() {
+
+        when(currencyRepository.getByCode(any())).thenReturn(new Currency());
+        Double expectedInstallment = transactionService.calculateInstallment(1000.0, 5.0, 12);
+
+        Boolean result = transactionService.processInstallment(userAccount, bankAccount, installment);
+
+        assertTrue(result);
+        assertEquals(5000.0 - expectedInstallment, userAccount.getBalance()); // Balance decreased
+        assertEquals(10000.0 + expectedInstallment, bankAccount.getBalance()); // Bank received payment
+
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
+        verify(accountRepository, times(1)).save(userAccount);
+        verify(accountRepository, times(1)).save(bankAccount);
+    }
+
+    @Test
+    void testProcessInstallment_InsufficientFunds() {
+        userAccount.setBalance(50.0);
+
+        Boolean result = transactionService.processInstallment(userAccount, bankAccount, installment);
+
+        assertFalse(result);
+        assertEquals(50.0, userAccount.getBalance());
+        assertEquals(10000.0, bankAccount.getBalance());
+
+        verify(transactionRepository, never()).save(any(Transaction.class));
+        verify(accountRepository, never()).save(any());
     }
 }
+
