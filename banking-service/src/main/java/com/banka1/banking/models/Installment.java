@@ -6,8 +6,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Entity
 @Getter
 @Setter
@@ -38,11 +36,18 @@ public class Installment {
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;
+
     @Column(nullable = false)
     private Boolean isPaid;
+
     @Column(nullable = false)
-    private LocalDate retryDate; // Datum sledećeg pokušaja naplate
+    private Long retryDate; // Datum sledećeg pokušaja naplate
+
     @Column(nullable = false)
     private Integer attemptCount; // Broj pokušaja naplate
+
+    @ManyToOne
+    @JoinColumn(name = "transaction_id", nullable = false)
+    Transaction transaction;
 
 }
