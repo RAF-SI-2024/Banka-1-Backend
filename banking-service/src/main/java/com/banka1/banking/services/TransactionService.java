@@ -181,12 +181,34 @@ public class TransactionService {
         List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
         return transactions;
     }
+    public Double calculateInstallment(Double loanAmount, Double annualInterestRate, Integer numberOfInstallments) {
+        Double monthlyInterestRate = annualInterestRate / 12 / 100;  // Kamatna stopa kao decimalni broj
+
+        // Ako je mesečna kamatna stopa 0 (kredit bez kamate)
+        if (monthlyInterestRate == 0) {
+            return loanAmount / numberOfInstallments; // Ako nema kamate, rata je samo podeljeni iznos kredita
+        }
+
+        // Izračunavanje mesečne rate koristeći formulu
+        Double numerator = monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfInstallments);
+        Double denominator = Math.pow(1 + monthlyInterestRate, numberOfInstallments) - 1;
+        Double installmentAmount = loanAmount * (numerator / denominator);
+
+        return installmentAmount;
+    }
 
     public Boolean processInstallment(Account customerAccount, Account bankAccount, Installment installment) {
-        Double amount = installment.getAmount();
+        System.out.println("Ja");
+        System.out.println("INSTALLMENT" + installment);
+        Double loanAmount = installment.getLoan().getLoanAmount(); // Iznos kredita
+        Double annualInterestRate = installment.getInterestRate(); // Godišnja kamatna stopa
+        Integer numberOfInstallments = installment.getLoan().getNumberOfInstallments(); // Broj rata
+
+        Double amount = calculateInstallment(loanAmount, annualInterestRate, numberOfInstallments);
+
             if (customerAccount.getBalance().compareTo(amount) >= 0) {
-//                customerAccount.withdraw(amount);
-//                bankAccount.deposit(amount);
+                customerAccount.setBalance(customerAccount.getBalance() - amount);
+                bankAccount.setBalance(bankAccount.getBalance() + amount);
                 Transaction transaction = new Transaction();
                 transaction.setFromAccountId(customerAccount);
                 transaction.setToAccountId(bankAccount);

@@ -41,18 +41,11 @@ public class Installment {
     @Column(nullable = false)
     private Boolean isPaid;
     @Column(nullable = false)
-    private LocalDate retryDate; // Datum sledećeg pokušaja naplate
-    @Column(nullable = false)
-    private Integer attemptCount; // Broj pokušaja naplate
-
-    @Column(nullable = false)
-    private Boolean isPaid;
-
-    @Column(nullable = false)
     private Long retryDate; // Datum sledećeg pokušaja naplate
-
     @Column(nullable = false)
     private Integer attemptCount; // Broj pokušaja naplate
+
+
 
     @ManyToOne
     @JoinColumn(name = "transaction_id", nullable = false)

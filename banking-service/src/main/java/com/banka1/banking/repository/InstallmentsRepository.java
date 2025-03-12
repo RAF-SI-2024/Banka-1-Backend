@@ -14,7 +14,10 @@ import java.util.List;
 @Repository
 public interface InstallmentsRepository extends JpaRepository<Installment, Long> {
     List<Installment> getByLoanId(Long loanID);
-    @Query("SELECT i FROM Installment i WHERE i.expectedDueDate <= :today AND i.isPaid = false")
-    List<Installment> getDueInstallments(@Param("today") LocalDate today);
+    @Query("SELECT i FROM Installment i " +
+            "WHERE (i.expectedDueDate <= :today AND i.isPaid = false) " +
+            "OR (i.retryDate IS NOT NULL AND i.retryDate <= :today AND i.isPaid = false)")
+    List<Installment> getDueInstallments(@Param("today") Long today);
+
     Integer countByLoan(Loan loan);
 }

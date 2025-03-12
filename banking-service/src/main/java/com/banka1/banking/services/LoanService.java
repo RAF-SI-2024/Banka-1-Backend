@@ -8,29 +8,35 @@ import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.InstallmentsRepository;
 import com.banka1.banking.repository.LoanRepository;
+import com.banka1.banking.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+import java.util.logging.Logger;
 
 
 @Service
+@EnableScheduling
+
 public class LoanService {
     private final LoanRepository loanRepository;
     private final JmsTemplate jmsTemplate;
@@ -40,8 +46,8 @@ public class LoanService {
     private final AccountRepository accountRepository;
     private final UserServiceCustomer userServiceCustomer;
     private final InstallmentsRepository installmentsRepository;
-
-    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository) {
+    private final TransactionService transactionService;
+    public LoanService(LoanRepository loanRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, AccountRepository accountRepository, UserServiceCustomer userServiceCustomer, InstallmentsRepository installmentsRepository, TransactionService transactionService) {
         this.loanRepository = loanRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -50,6 +56,7 @@ public class LoanService {
         this.accountRepository = accountRepository;
         this.userServiceCustomer = userServiceCustomer;
         this.installmentsRepository = installmentsRepository;
+        this.transactionService = transactionService;
     }
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
@@ -91,7 +98,9 @@ public class LoanService {
 
     public List<Loan> getAllUserLoans(Long ownerId) {
         List<Account> accounts = accountRepository.findByOwnerID(ownerId);
-        if (accounts.isEmpty()) {return null;}
+        if (accounts.isEmpty()) {
+            return null;
+        }
         List<Loan> loans = new ArrayList<>();
         for (Account acc : accounts) {
             loans.addAll(getAllLoansForAccount(acc));
@@ -159,45 +168,58 @@ public class LoanService {
         if (!loan.getAccount().getOwnerID().equals(ownerId)) {return null;}
         Integer paidInstallments = installmentsRepository.countByLoan(loan);
         Integer numberOfInstallments = loan.getNumberOfInstallments()-paidInstallments;
-        return 0;
+        return numberOfInstallments;
+    }
+    public Account getBankAccount(CurrencyType currencyType) {
+        Long ownerId = 1L;
+        return accountRepository.findByOwnerIDAndCurrencyType(ownerId, currencyType);
     }
 
-//    @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
-//    public void processLoanPayments() {
-//        processDueInstallments();
-//    }
+    @Autowired
+    TransactionRepository transactionRepository;
 
-//    @Transactional
-//    public void processDueInstallments() {
-//        List<Installment> dueInstallments = installmentsRepository.getDueInstallments(LocalDate.now());
-//
-//        for (Installment installment : dueInstallments) {
-//            Account customerAccount = installment.getLoan().getAccount();
-//            Account bankAccount = accountRepository.findBankAccount();
-//
-//            Double amount = installment.getAmount();
-//
-//            if (customerAccount.getBalance().compareTo(amount) >= 0) {
-//                // Naplata uspešna
-//                customerAccount.withdraw(amount);
-//                bankAccount.deposit(amount);
-//                installment.setPaid(true);
-//                installment.setPaymentDate(LocalDate.now());
-//                installment.setAttemptCount(installment.getAttemptCount() + 1);
-//            } else {
-//                // Naplata nije uspela
-//                if (installment.getAttemptCount() == 0) {
-//                    installment.setRetryDate(LocalDate.now().plusDays(3)); // Pokušaj ponovo za 72h
-//                } else {
-//                    installment.setInterestRate(installment.getInterestRate().add(new BigDecimal("0.0005"))); // +0.05%
-//                    installment.setRetryDate(LocalDate.now().plusDays(3));
-//                }
-//                installment.setAttemptCount(installment.getAttemptCount() + 1);
-//            }
-//
-//            installmentRepository.save(installment);
-//            accountRepository.save(customerAccount);
-//            accountRepository.save(bankAccount);
-//        }
-//    }
+    @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
+    public void processLoanPayments() {
+        System.out.println("AAAA");
+        processDueInstallments();
+    }
+    @Transactional
+    public void processDueInstallments() {
+
+        List<Installment> dueInstallments = installmentsRepository.getDueInstallments(Instant.now().getEpochSecond());
+        for(Installment installment : dueInstallments) {
+            System.out.println("Due Installmnets" + installment);
+        }
+
+        if (dueInstallments == null || dueInstallments.isEmpty()) {
+            System.out.println("⚠️ No due installments found!"); // Debug info
+            return;
+        }
+
+
+        for (Installment installment : dueInstallments) {
+            if (installment == null || dueInstallments.isEmpty()) {
+                System.out.println("⚠️ No due installments found!"); // Debug info
+                return;
+            }
+            Account customerAccount = installment.getLoan().getAccount();
+            Account bankAccount = getBankAccount(customerAccount.getCurrencyType());
+            Boolean successfull = transactionService.processInstallment(customerAccount, bankAccount, installment);
+            System.out.println("Succes"  +  successfull);
+            if (successfull){
+                // Naplata uspela
+                installment.setIsPaid(true);
+                installment.setActualDueDate(Instant.now().getEpochSecond());
+            }else {
+                // Naplata nije uspela
+                installment.setIsPaid(false);
+                if (installment.getAttemptCount() != 0) {
+                    installment.setInterestRate(installment.getInterestRate() + 0.0005); // +0.05%
+                }
+
+                installment.setRetryDate(Instant.now().plus(Duration.ofDays(3)).getEpochSecond());
+            }
+            installmentsRepository.save(installment);
+        }
+    }
 }
