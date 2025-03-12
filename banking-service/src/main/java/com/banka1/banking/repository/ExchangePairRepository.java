@@ -7,7 +7,10 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExchangePairRepository extends JpaRepository<ExchangePair, Long> {
-    List<ExchangePair> findByBaseCurrencyCode(CurrencyType baseCurrency);}
+    List<ExchangePair> findByBaseCurrencyCode(CurrencyType baseCurrency);
+    Optional<ExchangePair> findByBaseCurrencyCodeAndTargetCurrencyCode(CurrencyType baseCurrency, CurrencyType targetCurrency);
+}

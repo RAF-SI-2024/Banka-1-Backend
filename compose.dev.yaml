@@ -10,27 +10,6 @@
 
 
 services:
-  proxy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-    networks:
-      - user-net
-      - banking-net
-      - notification-net
-      - proxy-net
-      - broker-net
-    # Required on linux for host.docker.internal to be accessible
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - user-service
-      - banking-service
   dev-message-broker:
     image: 'apache/activemq-classic:latest'
     ports:

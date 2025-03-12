@@ -147,7 +147,7 @@ public class LoanService {
         for (Account acc : accounts) {
             List<Loan> loans = loanRepository.getLoansByAccount(acc);
             for (Loan loan : loans) {
-                installments.addAll(installmentsRepository.getByLoanID(loan.getId()));
+                installments.addAll(installmentsRepository.getByLoanId(loan.getId()));
             }
         }
         return installments;

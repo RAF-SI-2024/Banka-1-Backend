@@ -2,6 +2,7 @@ package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.ExchangeMoneyTransferDTO;
+import com.banka1.banking.dto.ExchangePreviewDTO;
 import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.services.ExchangeService;
 import com.banka1.banking.services.TransferService;
@@ -70,6 +71,60 @@ public class ExchangeController {
             return ResponseTemplate.create(ResponseEntity.badRequest(), e);
         }
 
+    }
+
+    @Operation(summary = "Pregled kursa pre razmene",
+            description = "Vraća kurs, iznos nakon konverzije, proviziju i krajnji iznos pre nego što korisnik potvrdi transfer.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"exchangeRate\": 117.5, \"convertedAmount\": 8.51, \"fee\": 0.25, \"finalAmount\": 8.26 }"))
+            ),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"error\": \"Kurs nije pronađen za traženu konverziju.\" }"))
+            )
+    })
+    @PostMapping("/preview")
+    public ResponseEntity<?> previewExchange(@RequestBody ExchangePreviewDTO exchangePreviewDTO) {
+        try {
+            Map<String, Object> previewData = exchangeService.calculatePreviewExchange(
+                    exchangePreviewDTO.getFromCurrency(),
+                    exchangePreviewDTO.getToCurrency(),
+                    exchangePreviewDTO.getAmount()
+            );
+            return ResponseEntity.ok(previewData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Pregled kursa za stranu valutu pre razmene",
+            description = "Vraća kurs za obe strane valute, ukupnu proviziju i konačan iznos nakon oduzimanja provizije.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija strane valute",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"firstExchangeRate\": 117.5, \"secondExchangeRate\": 105.2, \"totalFee\": 5.0, \"finalAmount\": 95.0 }"))
+            ),
+            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"error\": \"Kurs nije pronađen za traženu konverziju.\" }"))
+            )
+    })
+    @PostMapping("/preview-foreign")
+    public ResponseEntity<?> previewExchangeForeign(@RequestBody ExchangePreviewDTO exchangePreviewDTO) {
+        try {
+            Map<String, Object> previewData = exchangeService.calculatePreviewExchangeForeign(
+                    exchangePreviewDTO.getFromCurrency(),
+                    exchangePreviewDTO.getToCurrency(),
+                    exchangePreviewDTO.getAmount()
+            );
+            return ResponseEntity.ok(previewData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
 }

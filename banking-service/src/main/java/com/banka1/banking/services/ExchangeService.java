@@ -7,11 +7,14 @@ import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
+import com.banka1.banking.models.ExchangePair;
 import com.banka1.banking.models.Transfer;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.CurrencyRepository;
+import com.banka1.banking.repository.ExchangePairRepository;
 import com.banka1.banking.repository.TransferRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
@@ -39,7 +42,9 @@ public class ExchangeService {
 
     private final OtpTokenService otpTokenService;
 
-    public ExchangeService(AccountRepository accountRepository, CurrencyRepository currencyRepository, TransferRepository transferRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("send-email") String destinationEmail, UserServiceCustomer userServiceCustomer, OtpTokenService otpTokenService) {
+    private final ExchangePairRepository exchangePairRepository;
+
+    public ExchangeService(AccountRepository accountRepository, CurrencyRepository currencyRepository, TransferRepository transferRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, @Value("send-email") String destinationEmail, UserServiceCustomer userServiceCustomer, OtpTokenService otpTokenService, ExchangePairRepository exchangePairRepository) {
         this.accountRepository = accountRepository;
         this.currencyRepository = currencyRepository;
         this.transferRepository = transferRepository;
@@ -48,6 +53,7 @@ public class ExchangeService {
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
         this.otpTokenService = otpTokenService;
+        this.exchangePairRepository = exchangePairRepository;
     }
 
     public boolean validateExchangeTransfer(ExchangeMoneyTransferDTO exchangeMoneyTransferDTO){
@@ -131,6 +137,76 @@ public class ExchangeService {
         }
 
         return null;
+    }
+
+    public Map<String, Object> calculatePreviewExchange(String fromCurrency, String toCurrency, Double amount) {
+        boolean isToRSD = toCurrency.equals("RSD");
+        boolean isFromRSD = fromCurrency.equals("RSD");
+
+        if (!isToRSD && !isFromRSD) {
+            throw new RuntimeException("Ova funkcija podržava samo konverzije između RSD i druge valute.");
+        }
+
+        Optional<ExchangePair> exchangePairOpt = exchangePairRepository
+                .findByBaseCurrencyCodeAndTargetCurrencyCode(
+                        CurrencyType.valueOf(isToRSD ? fromCurrency : "RSD"),
+                        CurrencyType.valueOf(isToRSD ? "RSD" : toCurrency)
+                );
+
+        if (exchangePairOpt.isEmpty()) {
+            throw new RuntimeException("Kurs nije pronađen za traženu konverziju.");
+        }
+
+        ExchangePair exchangePair = exchangePairOpt.get();
+        double exchangeRate = exchangePair.getExchangeRate();
+        double convertedAmount = isToRSD ? amount * exchangeRate : amount / exchangeRate;
+        double fee = convertedAmount * 0.01;
+        double finalAmount = convertedAmount - fee;
+
+        return Map.of(
+                "exchangeRate", exchangeRate,
+                "convertedAmount", convertedAmount,
+                "fee", fee,
+                "finalAmount", finalAmount
+        );
+    }
+
+    public Map<String, Object> calculatePreviewExchangeForeign(String fromCurrency, String toCurrency, Double amount) {
+        if (fromCurrency.equals("RSD") || toCurrency.equals("RSD")) {
+            throw new RuntimeException("Ova metoda je samo za konverziju strane valute u stranu valutu.");
+        }
+
+        Optional<ExchangePair> firstExchangeOpt = exchangePairRepository
+                .findByBaseCurrencyCodeAndTargetCurrencyCode(CurrencyType.valueOf(fromCurrency), CurrencyType.RSD);
+
+        if (firstExchangeOpt.isEmpty()) {
+            throw new RuntimeException("Kurs za " + fromCurrency + " prema RSD nije pronađen.");
+        }
+
+        double firstExchangeRate = firstExchangeOpt.get().getExchangeRate();
+        double amountInRSD = amount * firstExchangeRate;
+        double firstFee = amountInRSD * 0.01;
+        double remainingRSD = amountInRSD - firstFee;
+
+        Optional<ExchangePair> secondExchangeOpt = exchangePairRepository
+                .findByBaseCurrencyCodeAndTargetCurrencyCode(CurrencyType.RSD, CurrencyType.valueOf(toCurrency));
+
+        if (secondExchangeOpt.isEmpty()) {
+            throw new RuntimeException("Kurs za RSD prema " + toCurrency + " nije pronađen.");
+        }
+
+        double secondExchangeRate = secondExchangeOpt.get().getExchangeRate();
+        double amountInTargetCurrency = remainingRSD / secondExchangeRate;
+        double secondFee = amountInTargetCurrency * 0.01;
+        double finalAmount = amountInTargetCurrency - secondFee;
+        double totalFee = firstFee + secondFee;
+
+        return Map.of(
+                "firstExchangeRate", firstExchangeRate,
+                "secondExchangeRate", secondExchangeRate,
+                "totalFee", totalFee,
+                "finalAmount", finalAmount
+        );
     }
 
 }
