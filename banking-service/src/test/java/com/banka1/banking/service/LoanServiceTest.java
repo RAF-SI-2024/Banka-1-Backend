@@ -46,7 +46,7 @@ public class LoanServiceTest {
         createLoanDTO = new CreateLoanDTO();
         createLoanDTO.setAccountId(1L);
         createLoanDTO.setMonthlyPayment(10.0);
-        createLoanDTO.setDuration(12.0);
+        createLoanDTO.setDuration(12);
         createLoanDTO.setLoanAmount(20000.0);
         createLoanDTO.setEffectiveRate(0.4);
         createLoanDTO.setNominalRate(0.21);
@@ -58,13 +58,18 @@ public class LoanServiceTest {
     void testCreateLoanSuccessfully() {
 
         Loan loan = new Loan();
+        loan.setNumberOfInstallments(12);
         loan.setLoanType(LoanType.CASH);
 
-        when(modelMapper.map(createLoanDTO, Loan.class)).thenReturn(loan);
 
         Account account = new Account();
+        account.setId(1L);
         account.setType(AccountType.CURRENT);
         account.setSubtype(AccountSubtype.PERSONAL);
+
+        loan.setAccount(account);
+
+        when(modelMapper.map(createLoanDTO, Loan.class)).thenReturn(loan);
 
         when(accountRepository.findById(createLoanDTO.getAccountId())).thenReturn(Optional.of(account));
 
