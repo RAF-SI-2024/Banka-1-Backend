@@ -15,7 +15,7 @@ public class CreateLoanDTO {
     private Double nominalRate;
     private Double effectiveRate;
     private Double loanAmount;
-    private Double duration;
+    private Integer duration;
     private Long allowedDate;
     private Double monthlyPayment;
     private CurrencyType currencyType;

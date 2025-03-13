@@ -181,6 +181,7 @@ public class TransactionService {
         List<Transaction> transactions = transactionRepository.findByFromAccountIdIn(accounts);
         return transactions;
     }
+
     public Double calculateInstallment(Double loanAmount, Double annualInterestRate, Integer numberOfInstallments) {
         Double monthlyInterestRate = annualInterestRate / 12 / 100;  // Kamatna stopa kao decimalni broj
 
@@ -198,8 +199,6 @@ public class TransactionService {
     }
 
     public Boolean processInstallment(Account customerAccount, Account bankAccount, Installment installment) {
-        System.out.println("Ja");
-        System.out.println("INSTALLMENT" + installment);
         Double loanAmount = installment.getLoan().getLoanAmount(); // Iznos kredita
         Double annualInterestRate = installment.getInterestRate(); // Godišnja kamatna stopa
         Integer numberOfInstallments = installment.getLoan().getNumberOfInstallments(); // Broj rata
