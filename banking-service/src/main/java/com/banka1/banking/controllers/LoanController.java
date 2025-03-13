@@ -300,8 +300,8 @@ public class LoanController {
     @GetMapping("/start_cron")
     @Operation(summary = "Vestacko pokretanje cron joba")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "lista kredita."),
-            @ApiResponse(responseCode = "404", description = "nema kredita na cekanju.")
+            @ApiResponse(responseCode = "200", description = "izvrsen"),
+            @ApiResponse(responseCode = "404", description = "nije")
     })
     @LoanAuthorization(employeeOnlyOperation = true)
     public ResponseEntity<?> getRemainingInstallments() {
