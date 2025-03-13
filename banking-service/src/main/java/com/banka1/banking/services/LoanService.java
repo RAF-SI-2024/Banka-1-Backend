@@ -175,11 +175,11 @@ public class LoanService {
     }
 
     @Scheduled(cron = "0 0 0 * * *")  // Pokreće se svakog dana u ponoć
+    @Transactional
     public void processLoanPayments() {
         processDueInstallments();
     }
 
-    @Transactional
     public void processDueInstallments() {
         List<Installment> dueInstallments = installmentsRepository.getDueInstallments(Instant.now().getEpochSecond());
 

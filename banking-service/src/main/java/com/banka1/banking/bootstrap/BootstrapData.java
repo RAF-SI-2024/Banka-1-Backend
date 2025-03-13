@@ -22,9 +22,10 @@ public class BootstrapData implements CommandLineRunner {
     private final TransferRepository transferRepository;
     private final ReceiverRepository receiverRepository;
     private final LoanRepository loanRepository;
+    private final CompanyRepository companyRepository;
 
     @Autowired
-    public BootstrapData(CurrencyRepository currencyRepository, CurrencyService currencyService, AccountRepository accountRepository, TransactionRepository transactionRepository, TransferRepository transferRepository, ReceiverRepository receiverRepository, LoanRepository loanRepository) {
+    public BootstrapData(CurrencyRepository currencyRepository, CurrencyService currencyService, AccountRepository accountRepository, TransactionRepository transactionRepository, TransferRepository transferRepository, ReceiverRepository receiverRepository, LoanRepository loanRepository, CompanyRepository companyRepository) {
         this.currencyRepository = currencyRepository;
         this.currencyService = currencyService;
         this.accountRepository = accountRepository;
@@ -32,6 +33,7 @@ public class BootstrapData implements CommandLineRunner {
         this.transferRepository = transferRepository;
         this.receiverRepository = receiverRepository;
         this.loanRepository = loanRepository;
+        this.companyRepository = companyRepository;
     }
 
     @Override
@@ -533,6 +535,176 @@ public class BootstrapData implements CommandLineRunner {
 
         loanRepository.save(loan);
         loanRepository.save(loan1);
+
+
+        /// RACUNI NASE BANKE U SVIM PODRZANIM VALUTAMA
+        Company ourBank = new Company();
+        ourBank.setName("Banka 1");
+        ourBank.setAddress("Mite Ruzica 106");
+        ourBank.setVatNumber("11111");
+        ourBank.setCompanyNumber("11111");
+        companyRepository.save(ourBank);
+
+        Account bankAccountRSD = new Account();
+        bankAccountRSD.setAccountNumber("111000012345678912");
+        bankAccountRSD.setBalance(1000000.0);
+        bankAccountRSD.setCompany(ourBank);
+        bankAccountRSD.setDailyLimit(0.0);
+        bankAccountRSD.setMonthlyLimit(1000000.0);
+        bankAccountRSD.setDailySpent(0.0);
+        bankAccountRSD.setMonthlySpent(0.0);
+        bankAccountRSD.setCurrencyType(CurrencyType.RSD);
+        bankAccountRSD.setExpirationDate(1630454400000L);
+        bankAccountRSD.setCreatedDate(2025030500000L);
+        bankAccountRSD.setEmployeeID(1L);
+        bankAccountRSD.setMonthlyMaintenanceFee(0.0);
+        bankAccountRSD.setReservedBalance(0.0);
+        bankAccountRSD.setOwnerID(1L);
+        bankAccountRSD.setStatus(AccountStatus.ACTIVE);
+        bankAccountRSD.setType(AccountType.CURRENT);
+        bankAccountRSD.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountRSD);
+
+        Account bankAccountEUR = new Account();
+        bankAccountEUR.setAccountNumber("111000012345679013");
+        bankAccountEUR.setBalance(1000000.0);
+        bankAccountEUR.setCompany(ourBank);
+        bankAccountEUR.setDailyLimit(0.0);
+        bankAccountEUR.setMonthlyLimit(1000000.0);
+        bankAccountEUR.setDailySpent(0.0);
+        bankAccountEUR.setMonthlySpent(0.0);
+        bankAccountEUR.setCurrencyType(CurrencyType.EUR);
+        bankAccountEUR.setExpirationDate(1630454400000L);
+        bankAccountEUR.setCreatedDate(2025030500000L);
+        bankAccountEUR.setEmployeeID(1L);
+        bankAccountEUR.setMonthlyMaintenanceFee(0.0);
+        bankAccountEUR.setReservedBalance(0.0);
+        bankAccountEUR.setOwnerID(1L);
+        bankAccountEUR.setStatus(AccountStatus.ACTIVE);
+        bankAccountEUR.setType(AccountType.CURRENT);
+        bankAccountEUR.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountEUR);
+
+        Account bankAccountUSD = new Account();
+        bankAccountUSD.setAccountNumber("111000012345679114");
+        bankAccountUSD.setBalance(1000000.0);
+        bankAccountUSD.setCompany(ourBank);
+        bankAccountUSD.setDailyLimit(0.0);
+        bankAccountUSD.setMonthlyLimit(1000000.0);
+        bankAccountUSD.setDailySpent(0.0);
+        bankAccountUSD.setMonthlySpent(0.0);
+        bankAccountUSD.setCurrencyType(CurrencyType.USD);
+        bankAccountUSD.setExpirationDate(1630454400000L);
+        bankAccountUSD.setCreatedDate(2025030500000L);
+        bankAccountUSD.setEmployeeID(1L);
+        bankAccountUSD.setMonthlyMaintenanceFee(0.0);
+        bankAccountUSD.setReservedBalance(0.0);
+        bankAccountUSD.setOwnerID(1L);
+        bankAccountUSD.setStatus(AccountStatus.ACTIVE);
+        bankAccountUSD.setType(AccountType.CURRENT);
+        bankAccountUSD.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountUSD);
+
+        Account bankAccountGBP = new Account();
+        bankAccountGBP.setAccountNumber("111000012345679215");
+        bankAccountGBP.setBalance(1000000.0);
+        bankAccountGBP.setCompany(ourBank);
+        bankAccountGBP.setDailyLimit(0.0);
+        bankAccountGBP.setMonthlyLimit(1000000.0);
+        bankAccountGBP.setDailySpent(0.0);
+        bankAccountGBP.setMonthlySpent(0.0);
+        bankAccountGBP.setCurrencyType(CurrencyType.GBP);
+        bankAccountGBP.setExpirationDate(1630454400000L);
+        bankAccountGBP.setCreatedDate(2025030500000L);
+        bankAccountGBP.setEmployeeID(1L);
+        bankAccountGBP.setMonthlyMaintenanceFee(0.0);
+        bankAccountGBP.setReservedBalance(0.0);
+        bankAccountGBP.setOwnerID(1L);
+        bankAccountGBP.setStatus(AccountStatus.ACTIVE);
+        bankAccountGBP.setType(AccountType.CURRENT);
+        bankAccountGBP.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountGBP);
+
+        Account bankAccountCHF = new Account();
+        bankAccountCHF.setAccountNumber("111000012345679316");
+        bankAccountCHF.setBalance(1000000.0);
+        bankAccountCHF.setCompany(ourBank);
+        bankAccountCHF.setDailyLimit(0.0);
+        bankAccountCHF.setMonthlyLimit(1000000.0);
+        bankAccountCHF.setDailySpent(0.0);
+        bankAccountCHF.setMonthlySpent(0.0);
+        bankAccountCHF.setCurrencyType(CurrencyType.CHF);
+        bankAccountCHF.setExpirationDate(1630454400000L);
+        bankAccountCHF.setCreatedDate(2025030500000L);
+        bankAccountCHF.setEmployeeID(1L);
+        bankAccountCHF.setMonthlyMaintenanceFee(0.0);
+        bankAccountCHF.setReservedBalance(0.0);
+        bankAccountCHF.setOwnerID(1L);
+        bankAccountCHF.setStatus(AccountStatus.ACTIVE);
+        bankAccountCHF.setType(AccountType.CURRENT);
+        bankAccountCHF.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountCHF);
+
+        Account bankAccountJPY = new Account();
+        bankAccountJPY.setAccountNumber("11100001234567947");
+        bankAccountJPY.setBalance(1000000.0);
+        bankAccountJPY.setCompany(ourBank);
+        bankAccountJPY.setDailyLimit(0.0);
+        bankAccountJPY.setMonthlyLimit(1000000.0);
+        bankAccountJPY.setDailySpent(0.0);
+        bankAccountJPY.setMonthlySpent(0.0);
+        bankAccountJPY.setCurrencyType(CurrencyType.JPY);
+        bankAccountJPY.setExpirationDate(1630454400000L);
+        bankAccountJPY.setCreatedDate(2025030500000L);
+        bankAccountJPY.setEmployeeID(1L);
+        bankAccountJPY.setMonthlyMaintenanceFee(0.0);
+        bankAccountJPY.setReservedBalance(0.0);
+        bankAccountJPY.setOwnerID(1L);
+        bankAccountJPY.setStatus(AccountStatus.ACTIVE);
+        bankAccountJPY.setType(AccountType.CURRENT);
+        bankAccountJPY.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountJPY);
+
+        Account bankAccountCAD = new Account();
+        bankAccountCAD.setAccountNumber("111000012345679518");
+        bankAccountCAD.setBalance(1000000.0);
+        bankAccountCAD.setCompany(ourBank);
+        bankAccountCAD.setDailyLimit(0.0);
+        bankAccountCAD.setMonthlyLimit(1000000.0);
+        bankAccountCAD.setDailySpent(0.0);
+        bankAccountCAD.setMonthlySpent(0.0);
+        bankAccountCAD.setCurrencyType(CurrencyType.CAD);
+        bankAccountCAD.setExpirationDate(1630454400000L);
+        bankAccountCAD.setCreatedDate(2025030500000L);
+        bankAccountCAD.setEmployeeID(1L);
+        bankAccountCAD.setMonthlyMaintenanceFee(0.0);
+        bankAccountCAD.setReservedBalance(0.0);
+        bankAccountCAD.setOwnerID(1L);
+        bankAccountCAD.setStatus(AccountStatus.ACTIVE);
+        bankAccountCAD.setType(AccountType.CURRENT);
+        bankAccountCAD.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountCAD);
+
+
+        Account bankAccountAUD = new Account();
+        bankAccountAUD.setAccountNumber("111000012345679619");
+        bankAccountAUD.setBalance(1000000.0);
+        bankAccountAUD.setCompany(ourBank);
+        bankAccountAUD.setDailyLimit(0.0);
+        bankAccountAUD.setMonthlyLimit(1000000.0);
+        bankAccountAUD.setDailySpent(0.0);
+        bankAccountAUD.setMonthlySpent(0.0);
+        bankAccountAUD.setCurrencyType(CurrencyType.AUD);
+        bankAccountAUD.setExpirationDate(1630454400000L);
+        bankAccountAUD.setCreatedDate(2025030500000L);
+        bankAccountAUD.setEmployeeID(1L);
+        bankAccountAUD.setMonthlyMaintenanceFee(0.0);
+        bankAccountAUD.setReservedBalance(0.0);
+        bankAccountAUD.setOwnerID(1L);
+        bankAccountAUD.setStatus(AccountStatus.ACTIVE);
+        bankAccountAUD.setType(AccountType.CURRENT);
+        bankAccountAUD.setSubtype(AccountSubtype.STANDARD);
+        accountRepository.save(bankAccountAUD);
 
         System.out.println("============== Data Loaded ==============");
     }

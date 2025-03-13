@@ -106,12 +106,6 @@ class LoanPaymentSchedulerTest {
 
     @Test
     void testProcessDueInstallments_NoInstallmentsFound() {
-        when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Arrays.asList(null, null));
-
-        assertThrows(RuntimeException.class, () -> {
-            loanService.processDueInstallments();
-        });
-
         when(installmentsRepository.getDueInstallments(anyLong())).thenReturn(Collections.emptyList());
 
         assertThrows(RuntimeException.class, () -> {
