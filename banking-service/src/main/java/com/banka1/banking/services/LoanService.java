@@ -191,7 +191,7 @@ public class LoanService {
         for (Installment installment : dueInstallments) {
             if (installment == null) {
                 System.out.println("⚠️ No installment info found!");
-                throw new RuntimeException("Nema podataka za ovu ratu");
+                continue;
             }
 
             Account customerAccount = installment.getLoan().getAccount();
