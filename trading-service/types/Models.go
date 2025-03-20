@@ -20,6 +20,10 @@ type Security struct {
 	BidPrice       float64 `gorm:"default:null" json:"bid,omitempty"`
 	Volume         int64   `gorm:"default:0" json:"availableQuantity,omitempty"`
 	SettlementDate *string `gorm:"default:null" json:"settlementDate,omitempty"` // Samo za futures i opcije
+	// data for option
+	StrikePrice *float64 `gorm:"default:null" json:"strikePrice,omitempty"`
+	OptionType  *string  `gorm:"default:null" json:"optionType,omitempty"`
+	// data for futures
 }
 
 type Order struct {

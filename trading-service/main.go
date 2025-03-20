@@ -637,7 +637,26 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 		}
 	case "Option":
 		{
+			var option types.Option
+			if result := db.DB.Where("listing_id = ?", l.ID).First(&option); result.Error != nil {
+				return nil, result.Error
+			}
+			security = types.Security{
+				Ticker:         l.Ticker,
+				Name:           l.Name,
+				Type:           l.Type,
+				Exchange:       l.Exchange.Name,
+				LastPrice:      float64(l.Price),
+				AskPrice:       float64(l.Ask),
+				BidPrice:       float64(l.Bid),
+				Volume:         int64(l.ContractSize * 10),
+				StrikePrice:    &option.StrikePrice,
+				OptionType:     &option.OptionType,
+				SettlementDate: nil,
+			}
+
 		}
+
 	}
 	return &security, nil
 }

@@ -3,6 +3,7 @@ package options
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -106,9 +107,27 @@ func LoadAllOptions() error {
 	return nil
 }
 
+func formatStrikePrice(strike float64) string {
+	return fmt.Sprintf("%08d", int(strike*100)) // Convert to cents and pad with zeros
+}
+
+// Generate a unique ticker for the option
+func GenerateOptionTicker(baseTicker string, expiration time.Time, optionType string, strike float64) string {
+	// Extract year (YY), month (MM), and day (DD)
+	year := expiration.Year() % 100  // Get last two digits of year (2024 → 24)
+	month := int(expiration.Month()) // Month as number (06 for June)
+	day := expiration.Day()          // Day of the month (21)
+
+	// Convert strike price to correct format
+	strikePrice := formatStrikePrice(strike)
+
+	// Construct the final ticker
+	return fmt.Sprintf("%s%02d%02d%02d%s%s", baseTicker, year, month, day, optionType, strikePrice)
+}
+
 func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
-	var listing types.Listing
-	if err := db.DB.Where("ticker = ?", ticker).First(&listing).Error; err != nil {
+	var baseListing types.Listing
+	if err := db.DB.Where("ticker = ?", ticker).First(&baseListing).Error; err != nil {
 		return errors.New("listing not found for ticker: " + ticker)
 	}
 
@@ -118,8 +137,32 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 		for _, opt := range result.Options {
 			// Save CALL options
 			for _, call := range opt.Calls {
+				optionTicker := GenerateOptionTicker(ticker, expirationDate, "C", call.Strike)
+
+				// Check if Listing already exists
+				var optionListing types.Listing
+				if err := db.DB.Where("ticker = ?", optionTicker).First(&optionListing).Error; err != nil {
+					// If not found, create a new Listing for the option
+					optionListing = types.Listing{
+						Ticker:       optionTicker,
+						Name:         baseListing.Name + " Option",
+						ExchangeID:   baseListing.ExchangeID,
+						LastRefresh:  time.Now(),
+						Price:        float32(call.LastPrice),
+						Ask:          float32(call.Ask),
+						Bid:          float32(call.Bid),
+						Type:         "Option",
+						Subtype:      "Call Option",
+						ContractSize: 100,
+					}
+					if err := db.DB.Create(&optionListing).Error; err != nil {
+						return err
+					}
+				}
+
+				// Save Call Option
 				option := types.Option{
-					ListingID:      listing.ID,
+					ListingID:      optionListing.ID,
 					OptionType:     "Call",
 					StrikePrice:    call.Strike,
 					ImpliedVol:     call.ImpliedVolatility,
@@ -127,8 +170,6 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 					SettlementDate: expirationDate,
 					ContractSize:   100, // Default contract size
 				}
-
-				// Insert into DB
 				if err := db.DB.Create(&option).Error; err != nil {
 					return err
 				}
@@ -136,8 +177,32 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 
 			// Save PUT options
 			for _, put := range opt.Puts {
+				optionTicker := GenerateOptionTicker(ticker, expirationDate, "P", put.Strike)
+
+				// Check if Listing already exists
+				var optionListing types.Listing
+				if err := db.DB.Where("ticker = ?", optionTicker).First(&optionListing).Error; err != nil {
+					// If not found, create a new Listing for the option
+					optionListing = types.Listing{
+						Ticker:       optionTicker,
+						Name:         baseListing.Name + " Option",
+						ExchangeID:   baseListing.ExchangeID,
+						LastRefresh:  time.Now(),
+						Price:        float32(put.LastPrice),
+						Ask:          float32(put.Ask),
+						Bid:          float32(put.Bid),
+						Type:         "Option",
+						Subtype:      "Put Option",
+						ContractSize: 100,
+					}
+					if err := db.DB.Create(&optionListing).Error; err != nil {
+						return err
+					}
+				}
+
+				// Save Put Option
 				option := types.Option{
-					ListingID:      listing.ID,
+					ListingID:      optionListing.ID,
 					OptionType:     "Put",
 					StrikePrice:    put.Strike,
 					ImpliedVol:     put.ImpliedVolatility,
@@ -145,8 +210,6 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 					SettlementDate: expirationDate,
 					ContractSize:   100,
 				}
-
-				// Insert into DB
 				if err := db.DB.Create(&option).Error; err != nil {
 					return err
 				}
