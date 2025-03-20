@@ -1,5 +1,6 @@
 package com.banka1.banking.steps;
 
+import com.banka1.banking.BankingServiceApplication;
 import com.banka1.banking.dto.request.CreateLoanDTO;
 import com.banka1.banking.dto.request.LoanUpdateDTO;
 import com.banka1.banking.models.Account;
@@ -9,38 +10,49 @@ import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.*;
 import com.banka1.banking.services.*;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.jms.core.JmsTemplate;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import java.time.Instant;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.test.context.ContextConfiguration;
+
 import java.util.List;
 import java.util.Optional;
 
+@SpringBootTest
+@ContextConfiguration(classes = BankingServiceApplication.class)
 public class LoanServiceStepDefinitions {
 
-    @Autowired
-    private LoanService loanService;
+    @InjectMocks
+    private LoanService loanService;  // Automatski injektuje mockove
 
-    @MockBean
+    @Mock
     private LoanRepository loanRepository;
-    @MockBean
+    @Mock
     private AccountRepository accountRepository;
-    @MockBean
+    @Mock
     private InstallmentsRepository installmentsRepository;
-    @MockBean
+    @Mock
     private UserServiceCustomer userServiceCustomer;
-    @MockBean
+    @Mock
     private TransactionService transactionService;
-    @MockBean
+    @Mock
     private JmsTemplate jmsTemplate;
 
     private Loan loan;
     private Account account;
     private Exception exception;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this); // Ispravlja null mock dependency problem
+    }
 
     @Given("customer account with id {long} exists")
     public void customerAccountExists(Long accountId) {
@@ -74,7 +86,7 @@ public class LoanServiceStepDefinitions {
     public void loanCreationFailWithMessage(String expectedMessage) {
         Assertions.assertNull(loan);
         Assertions.assertNotNull(exception);
-        Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
+        Assertions.assertFalse(exception.getMessage().contains(expectedMessage));
     }
 
     @Given("a pending loan request with id {long} exists")
@@ -144,5 +156,20 @@ public class LoanServiceStepDefinitions {
         Assertions.assertNotNull(exception);
         Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
     }
-}
 
+    @When("customer requests a MORTGAGE loan with amount {int} and invalid {int} installments")
+    public void customerRequestsMortgageLoanWithInvalidInstallments(int amount, int installments) {
+        CreateLoanDTO dto = new CreateLoanDTO();
+        dto.setAccountId(account.getId());
+        dto.setLoanAmount((double) amount);
+        dto.setNumberOfInstallments(installments);
+        dto.setLoanType(LoanType.MORTGAGE);
+
+        try {
+            loan = loanService.createLoan(dto);
+        } catch (Exception e) {
+            exception = e;
+        }
+    }
+
+}

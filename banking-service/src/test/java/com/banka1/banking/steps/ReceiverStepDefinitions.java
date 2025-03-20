@@ -1,28 +1,40 @@
 package com.banka1.banking.steps;
 
-import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
+import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.repository.ReceiverRepository;
 import com.banka1.banking.services.ReceiverService;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+
 
 import java.util.Optional;
 
+@SpringBootTest
+@ContextConfiguration(classes = ReceiverService.class)
 public class ReceiverStepDefinitions {
 
-    @Autowired
+    @InjectMocks
     private ReceiverService receiverService;
 
-    @MockBean
+    @Mock
     private ReceiverRepository receiverRepository;
 
     private ReceiverDTO receiverDTO;
     private Receiver receiver;
     private Exception exception;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this); // Ispravlja NullPointerException na mock-ovima
+    }
 
     @Given("receiver with account number {string} does not exist for account {long}")
     public void receiverDoesNotExist(String accNumber, Long accId) {

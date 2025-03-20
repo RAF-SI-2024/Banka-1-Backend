@@ -5,26 +5,33 @@ import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
 import com.banka1.banking.repository.*;
 import com.banka1.banking.services.TransactionService;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+
 
 import java.util.Optional;
 
+@SpringBootTest
+@ContextConfiguration(classes = TransactionService.class)
 public class TransactionStepDefinitions {
 
-    @Autowired
+    @InjectMocks
     private TransactionService transactionService;
 
-    @MockBean
+    @Mock
     private TransferRepository transferRepository;
-    @MockBean
+    @Mock
     private AccountRepository accountRepository;
-    @MockBean
+    @Mock
     private TransactionRepository transactionRepository;
-    @MockBean
+    @Mock
     private CurrencyRepository currencyRepository;
 
     private Transfer transfer;
@@ -33,6 +40,11 @@ public class TransactionStepDefinitions {
     private Installment installment;
     private Exception exception;
     private Double calculatedInstallment;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this); // Ispravlja NullPointerException na mock-ovima
+    }
 
     @Given("internal transfer with id {long} is pending and sender has sufficient balance")
     public void internalTransferPendingSufficientFunds(Long transferId) {
@@ -99,6 +111,17 @@ public class TransactionStepDefinitions {
         Assertions.assertEquals(TransferStatus.FAILED, transfer.getStatus());
     }
 
+    @Then("accounts and transactions should be updated")
+    public void accountsAndTransactionsShouldBeUpdated() {
+        // Provera da li su oba računa ažurirana
+        Assertions.assertTrue(senderAccount.getBalance() < 10000.0); // Proveravamo da li je iznos skinut
+        Assertions.assertTrue(receiverAccount.getBalance() > 5000.0); // Proveravamo da li je banka primila uplatu
+
+        // Provera da li su transakcije sačuvane
+        Mockito.verify(transactionRepository, Mockito.atLeastOnce()).save(Mockito.any(Transaction.class));
+    }
+
+
     @Given("external transfer with id {long} is pending and sender has sufficient balance")
     public void externalTransferPendingSufficientFunds(Long transferId) {
         senderAccount = new Account();
@@ -164,4 +187,59 @@ public class TransactionStepDefinitions {
         boolean result = transactionService.processInstallment(senderAccount, receiverAccount, installment);
         Assertions.assertFalse(result);
     }
+
+
+    @Then("transactions should be created successfully")
+    public void transactionsShouldBeCreatedSuccessfully() {
+        // Proveravamo da li su transakcije uspešno kreirane
+        Mockito.verify(transactionRepository, Mockito.atLeast(1)).save(Mockito.any(Transaction.class));
+    }
+
+    @When("the external transfer with id {long} is processed")
+    public void theExternalTransferWithIdIsProcessed(Long transferId) {
+        try {
+            transactionService.processExternalTransfer(transferId);
+        } catch (Exception e) {
+            exception = e;
+        }
+    }
+
+    @Then("external transfer should be marked as COMPLETED")
+    public void externalTransferShouldBeMarkedAsCompleted() {
+        Assertions.assertEquals(TransferStatus.COMPLETED, transfer.getStatus());
+    }
+
+    @Then("accounts should be updated correctly")
+    public void accountsShouldBeUpdatedCorrectly() {
+        Assertions.assertTrue(senderAccount.getBalance() < 2000.0); // Proveravamo da je iznos skinut
+        Assertions.assertTrue(receiverAccount.getBalance() > 500.0); // Proveravamo da je primalac dobio novac
+    }
+
+    @Given("external transfer with id {long} is pending and sender has insufficient balance")
+    public void externalTransferPendingInsufficientFunds(Long transferId) {
+        senderAccount = new Account();
+        senderAccount.setBalance(50.0);  // Nedovoljno sredstava
+
+        receiverAccount = new Account();
+        receiverAccount.setBalance(500.0);
+
+        transfer = new Transfer();
+        transfer.setId(transferId);
+        transfer.setType(TransferType.EXTERNAL);
+        transfer.setStatus(TransferStatus.PENDING);
+        transfer.setAmount(500.0);
+        transfer.setFromAccountId(senderAccount);
+        transfer.setToAccountId(receiverAccount);
+
+        Mockito.when(transferRepository.findById(transferId)).thenReturn(Optional.of(transfer));
+    }
+
+    @Then("external transfer should fail with message {string}")
+    public void externalTransferShouldFailWithMessage(String expectedMessage) {
+        Assertions.assertNotNull(exception);
+        Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+
+
 }

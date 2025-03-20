@@ -1,5 +1,6 @@
 package com.banka1.banking.steps;
 
+import com.banka1.banking.BankingServiceApplication;
 import com.banka1.banking.dto.ExchangePairDTO;
 import com.banka1.banking.models.Currency;
 import com.banka1.banking.models.ExchangePair;
@@ -8,33 +9,43 @@ import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.ExchangePairRepository;
 import com.banka1.banking.services.CurrencyService;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.client.RestTemplate;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 
 import java.time.LocalDate;
 import java.util.*;
 
+@SpringBootTest
+@ContextConfiguration(classes = BankingServiceApplication.class)
 public class CurrencyStepDefinitions {
 
-    @Autowired
-    private CurrencyService currencyService;
+    @InjectMocks
+    private CurrencyService currencyService; // Pravilno inicijalizuje servis sa mock dependencijama
 
-    @MockBean
+    @Mock
     private RestTemplate restTemplate;
 
-    @MockBean
+    @Mock
     private CurrencyRepository currencyRepository;
 
-    @MockBean
+    @Mock
     private ExchangePairRepository exchangePairRepository;
 
     private List<ExchangePairDTO> exchangePairDTOList;
     private Exception exception;
 
-    private Map<String, Double> mockRates;
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this); // Inicijalizuje Mockito pre svakog testa
+    }
 
     @Given("external exchange rates API is available")
     public void externalExchangeRatesApiIsAvailable() {
@@ -49,9 +60,18 @@ public class CurrencyStepDefinitions {
 
     @Given("currencies RSD, EUR, USD exist in the database")
     public void currenciesExistInDatabase() {
-        Mockito.when(currencyRepository.findByCode(CurrencyType.RSD)).thenReturn(Optional.of(new Currency()));
-        Mockito.when(currencyRepository.findByCode(CurrencyType.EUR)).thenReturn(Optional.of(new Currency()));
-        Mockito.when(currencyRepository.findByCode(CurrencyType.USD)).thenReturn(Optional.of(new Currency()));
+        Currency rsd = new Currency();
+        rsd.setCode(CurrencyType.RSD);
+
+        Currency eur = new Currency();
+        eur.setCode(CurrencyType.EUR);
+
+        Currency usd = new Currency();
+        usd.setCode(CurrencyType.USD);
+
+        Mockito.when(currencyRepository.findByCode(CurrencyType.RSD)).thenReturn(Optional.of(rsd));
+        Mockito.when(currencyRepository.findByCode(CurrencyType.EUR)).thenReturn(Optional.of(eur));
+        Mockito.when(currencyRepository.findByCode(CurrencyType.USD)).thenReturn(Optional.of(usd));
     }
 
     @When("the scheduled task to fetch exchange rates is triggered")
@@ -94,12 +114,9 @@ public class CurrencyStepDefinitions {
         pairEUR.setExchangeRate(117.5);
         pairEUR.setDate(LocalDate.now());
 
-        Mockito.when(exchangePairRepository.findAll())
-                .thenReturn(Collections.singletonList(pairEUR));
-        Mockito.when(exchangePairRepository.findByBaseCurrencyCode(CurrencyType.RSD))
-                .thenReturn(Collections.singletonList(pairEUR));
+        Mockito.when(exchangePairRepository.findAll()).thenReturn(Collections.singletonList(pairEUR));
+        Mockito.when(exchangePairRepository.findByBaseCurrencyCode(CurrencyType.RSD)).thenReturn(Collections.singletonList(pairEUR));
     }
-
 
     @When("user requests all exchange rates")
     public void userRequestsAllExchangeRates() {
@@ -128,4 +145,3 @@ public class CurrencyStepDefinitions {
         Assertions.assertEquals(expectedError, exception.getMessage());
     }
 }
-

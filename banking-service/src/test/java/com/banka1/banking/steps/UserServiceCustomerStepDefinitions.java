@@ -3,30 +3,42 @@ package com.banka1.banking.steps;
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.services.UserServiceCustomer;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.*;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.jms.core.JmsTemplate;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.test.context.ContextConfiguration;
+
+@SpringBootTest
+@ContextConfiguration(classes = UserServiceCustomer.class)
 public class UserServiceCustomerStepDefinitions {
 
-    @Autowired
+    @InjectMocks
     private UserServiceCustomer userServiceCustomer;
 
-    @MockBean
+    @Mock
     private JmsTemplate jmsTemplate;
 
-    @MockBean
+    @Mock
     private MessageHelper messageHelper;
 
     private CustomerDTO customerDTO;
     private Exception exception;
 
-    @Given("customer with id {long} exists")
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this); // Ispravlja NullPointerException na mock-ovima
+    }
+
+    @Given("customer with id {long} exists in User Service")
     public void customerWithIdExists(Long customerId) throws JMSException {
         customerDTO = new CustomerDTO();
         customerDTO.setId(customerId);
@@ -77,4 +89,3 @@ public class UserServiceCustomerStepDefinitions {
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 }
-
