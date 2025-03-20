@@ -59,36 +59,83 @@ public class LoanService {
     }
 
     public Loan createLoan(@Valid CreateLoanDTO createLoanDTO) {
+        System.out.println("===== DEBUG START =====");
+        System.out.println("Creating loan for account: " + createLoanDTO.getAccountId());
+
+        // Find account
         Account account = accountRepository.findById(createLoanDTO.getAccountId())
                 .orElseThrow(() -> new RuntimeException("Racun nije pronadjen"));
-
+    
         if (account == null) {return null;}
+        
+        // Create new loan manually
+        Loan newLoan = new Loan();
+        
+        // Set basic loan info from DTO
+        newLoan.setLoanType(createLoanDTO.getLoanType());
+        newLoan.setNumberOfInstallments(createLoanDTO.getNumberOfInstallments());
+        newLoan.setInterestType(createLoanDTO.getInterestType());
+        newLoan.setLoanAmount(createLoanDTO.getLoanAmount());
+        newLoan.setCurrencyType(createLoanDTO.getCurrencyType());
+        
+        // Set loan reason from loanPurpose
+        if (createLoanDTO.getLoanPurpose() != null) {
+            newLoan.setLoanReason(createLoanDTO.getLoanPurpose());
+        } else {
+            newLoan.setLoanReason("General purpose");
+        }
+        
+        // CRITICAL - Set duration equal to numberOfInstallments
+        newLoan.setDuration(createLoanDTO.getNumberOfInstallments());
+        
+        // Set rates with defaults
+        newLoan.setNominalRate(createLoanDTO.getNominalRate() != null ? 
+            createLoanDTO.getNominalRate() : 5.5);
+        newLoan.setEffectiveRate(createLoanDTO.getEffectiveRate() != null ? 
+            createLoanDTO.getEffectiveRate() : 6.0);
+        
+        // Set dates
+        // Set dates with milliseconds instead of seconds for frontend compatibility
+        long currentTimeSeconds = Instant.now().getEpochSecond();
+        long currentTimeMillis = currentTimeSeconds * 1000; // Convert to milliseconds
 
-        Loan newLoan = modelMapper.map(createLoanDTO, Loan.class);
-
+        newLoan.setCreatedDate(currentTimeMillis);
+        newLoan.setAllowedDate(createLoanDTO.getAllowedDate() != null ? 
+            createLoanDTO.getAllowedDate() * 1000 : currentTimeMillis);
+        newLoan.setNextPaymentDate(currentTimeMillis + 30*24*60*60*1000); // 30 days in milliseconds
+        
+        // Set payment info
+        newLoan.setRemainingAmount(createLoanDTO.getLoanAmount());
+        newLoan.setMonthlyPayment(createLoanDTO.getMonthlyPayment() != null ? 
+            createLoanDTO.getMonthlyPayment() : 
+            (createLoanDTO.getLoanAmount() / createLoanDTO.getNumberOfInstallments()) * 1.05);
+        
+        // Set status and account
+        newLoan.setPaymentStatus(PaymentStatus.PENDING);
+        newLoan.setAccount(account);
+        
+        // Validation before saving
         if (newLoan.getLoanType().equals(LoanType.MORTGAGE)) {
             if (newLoan.getNumberOfInstallments() == null ||
                     (newLoan.getNumberOfInstallments()%60 != 0) ||
-                        newLoan.getNumberOfInstallments() > 360) {
+                    newLoan.getNumberOfInstallments() > 360) {
                 return null;
             }
         } else {
             if (newLoan.getNumberOfInstallments() == null ||
                     (newLoan.getNumberOfInstallments()%12 != 0) ||
-                        newLoan.getNumberOfInstallments() > 84) {
+                    newLoan.getNumberOfInstallments() > 84) {
                 return null;
             }
         }
-
-        newLoan.setPaymentStatus(PaymentStatus.PENDING);
-        newLoan.setAccount(account);
-        newLoan.setCreatedDate(Instant.now().getEpochSecond());
-        newLoan.setRemainingAmount(newLoan.getLoanAmount());
-        newLoan.setNextPaymentDate(newLoan.getCreatedDate()+30*24*60*60);
-//        newLoan.setCurrencyType(account.getCurrencyType());
-
-        newLoan = loanRepository.save(newLoan);
-        return newLoan;
+        
+        // Debug output to verify all fields are set
+        System.out.println("SAVING LOAN: Duration=" + newLoan.getDuration() + 
+                          ", Installments=" + newLoan.getNumberOfInstallments() + 
+                          ", Type=" + newLoan.getLoanType());
+        
+        // Save and return the loan
+        return loanRepository.save(newLoan);
     }
 
     public List<Loan> getPendingLoans() {
