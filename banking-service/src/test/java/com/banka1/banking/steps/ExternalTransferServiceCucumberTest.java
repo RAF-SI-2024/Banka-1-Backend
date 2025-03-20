@@ -1,4 +1,4 @@
-package com.banka1.banking.cucumber;
+package com.banka1.banking.steps;
 
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transfer;
