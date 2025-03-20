@@ -13,7 +13,9 @@ import (
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
+	"banka1.com/listings/options"
 	"banka1.com/listings/stocks"
+	"banka1.com/orders"
 	"banka1.com/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -57,7 +59,22 @@ func main() {
 		log.Println("Finished loading default futures")
 	}()
 
+	func() {
+		log.Println("Starting to load default options...")
+		err = options.LoadAllOptions()
+		if err != nil {
+			log.Printf("Warning: Failed to load options: %v", err)
+		}
+		log.Println("Finished loading default options")
+	}()
+
 	app := fiber.New()
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+		return c.Next()
+	})
 
 	routes.Setup(app)
 
@@ -532,6 +549,8 @@ func main() {
 	app.Get("/actuaries", controllers.NewActuaryController().GetAllActuaries)
 	app.Put("/actuaries/:ID", controllers.NewActuaryController().ChangeAgentLimits)
 	app.Get("/actuaries/filter", controllers.NewActuaryController().FilterActuaries)
+
+	orders.InitRoutes(app)
 
 	port := os.Getenv("PORT")
 	log.Fatal(app.Listen(":" + port))
