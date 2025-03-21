@@ -10,8 +10,8 @@ func Auth(c *fiber.Ctx) error {
 	auth := c.Get("Authorization")
 	if auth == "" {
 		return c.Status(401).JSON(fiber.Map{
-			"error":  "Unauthorized - No token provided",
-			"succes": false,
+			"error":   "Unauthorized - No token provided",
+			"success": false,
 		})
 	}
 
@@ -19,8 +19,8 @@ func Auth(c *fiber.Ctx) error {
 	token := auth[7:]
 	if token == "" {
 		return c.Status(401).JSON(fiber.Map{
-			"error":  "Unauthorized - No token provided",
-			"succes": false,
+			"error":   "Unauthorized - No token provided",
+			"success": false,
 		})
 	}
 

@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -220,15 +221,26 @@ public class LoanController {
             @PathVariable("loan_id") Long loanId,
             @RequestBody LoanUpdateDTO loanUpdateDTO) {
         try {
+            // Validate required fields
+            if (loanUpdateDTO == null || loanUpdateDTO.getApproved() == null) {
+                return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                        Map.of("message", "Approved status must be provided"), null);
+            }
+            
             Loan updatedLoan = loanService.updateLoanRequest(loanId, loanUpdateDTO);
             if (updatedLoan == null) {
                 return ResponseTemplate.create(ResponseEntity.badRequest(), false,
-                        Map.of( "message", ResponseMessage.LOAN_NOT_FOUND), null);
+                        Map.of("message", ResponseMessage.LOAN_NOT_FOUND), null);
             }
             return ResponseTemplate.create(ResponseEntity.ok(), true,
-                    Map.of( "message", ResponseMessage.UPDATED, "data", updatedLoan), null);
+                    Map.of("message", ResponseMessage.UPDATED, "data", updatedLoan), null);
+        } catch (HttpMessageNotReadableException e) {
+            // Specific handling for JSON parsing errors
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                    Map.of("message", "Failed to parse request body. Please check JSON format."), null);
         } catch (RuntimeException e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.badRequest(), false,
+                    Map.of("message", e.getMessage()), null);
         }
     }
     @GetMapping("/admin/{user_id}/installments")

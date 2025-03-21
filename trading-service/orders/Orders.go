@@ -1,6 +1,7 @@
 package orders
 
 import (
+	"banka1.com/middlewares"
 	"strings"
 
 	"banka1.com/db"
@@ -13,20 +14,20 @@ var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func OrderToOrderResponse(order types.Order) types.OrderResponse {
 	return types.OrderResponse{
-		ID: order.ID,
-		UserID: order.UserID,
-		SecurityID: order.SecurityID,
-		OrderType: order.OrderType,
-		Quantity: order.Quantity,
-		ContractSize: order.ContractSize,
-		PricePerUnit: order.PricePerUnit,
-		Direction: order.Direction,
-		Status: order.Status,
-		ApprovedBy: order.ApprovedBy,
-		IsDone: order.IsDone,
-		LastModified: order.LastModified,
+		ID:             order.ID,
+		UserID:         order.UserID,
+		SecurityID:     order.SecurityID,
+		OrderType:      order.OrderType,
+		Quantity:       order.Quantity,
+		ContractSize:   order.ContractSize,
+		PricePerUnit:   order.PricePerUnit,
+		Direction:      order.Direction,
+		Status:         order.Status,
+		ApprovedBy:     order.ApprovedBy,
+		IsDone:         order.IsDone,
+		LastModified:   order.LastModified,
 		RemainingParts: order.RemainingParts,
-		AfterHours: order.AfterHours,
+		AfterHours:     order.AfterHours,
 	}
 }
 
@@ -46,13 +47,13 @@ func GetOrderByID(c *fiber.Ctx) error {
 	if err := db.DB.First(&order, id).Error; err != nil {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
-			Error: "Nije pronadjen: " + err.Error(),
+			Error:   "Nije pronadjen: " + err.Error(),
 		})
 	}
 	return c.JSON(types.Response{
 		Success: true,
-		Data: OrderToOrderResponse(order),
-	});
+		Data:    OrderToOrderResponse(order),
+	})
 }
 
 func GetOrders(c *fiber.Ctx) error {
@@ -67,7 +68,7 @@ func GetOrders(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
-			Error: "Neuspela pretraga: " + err.Error(),
+			Error:   "Neuspela pretraga: " + err.Error(),
 		})
 	}
 	responses := make([]types.OrderResponse, len(orders))
@@ -76,49 +77,58 @@ func GetOrders(c *fiber.Ctx) error {
 	}
 	return c.JSON(types.Response{
 		Success: true,
-		Data: responses,
-	});
+		Data:    responses,
+	})
 }
 
 func CreateOrder(c *fiber.Ctx) error {
 	var orderRequest types.CreateOrderRequest
+	userId := c.Locals("user_id").(float64)
+
 	if err := c.BodyParser(&orderRequest); err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
-			Error: "Neuspelo parsiranje: " + err.Error(),
+			Error:   "Neuspelo parsiranje: " + err.Error(),
 		})
 	}
 	if err := validate.Struct(orderRequest); err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
-			Error: "Neuspela validacija: " + err.Error(),
+			Error:   "Neuspela validacija: " + err.Error(),
 		})
 	}
+	if userId != float64(orderRequest.UserID) {
+		return c.Status(403).JSON(types.Response{
+			Success: false,
+			Error:   "Cannot create order for another user",
+		})
+	}
+
 	order := types.Order{
-		UserID: orderRequest.UserID,
-		SecurityID: orderRequest.SecurityID,
-		OrderType: orderRequest.OrderType,
-		Quantity: orderRequest.Quantity,
-		ContractSize: orderRequest.ContractSize,
-		PricePerUnit: orderRequest.PricePerUnit,
-		Direction: orderRequest.Direction,
-		Status: "pending", // TODO: pribaviti needs approval vrednost preko token-a?
-		ApprovedBy: nil,
-		IsDone: false,
+		UserID:         orderRequest.UserID,
+		SecurityID:     orderRequest.SecurityID,
+		OrderType:      orderRequest.OrderType,
+		Quantity:       orderRequest.Quantity,
+		ContractSize:   orderRequest.ContractSize,
+		PricePerUnit:   orderRequest.PricePerUnit,
+		Direction:      orderRequest.Direction,
+		Status:         "pending", // TODO: pribaviti needs approval vrednost preko token-a?
+		ApprovedBy:     nil,
+		IsDone:         false,
 		RemainingParts: &orderRequest.Quantity,
-		AfterHours: false, // TODO: dodati check za ovo
+		AfterHours:     false, // TODO: dodati check za ovo
 	}
 	tx := db.DB.Create(&order)
 	if err := tx.Error; err != nil {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
-			Error: "Neuspelo kreiranje: " + err.Error(),
+			Error:   "Neuspelo kreiranje: " + err.Error(),
 		})
 	}
 	return c.JSON(types.Response{
 		Success: true,
-		Data: order.ID,
-	});
+		Data:    order.ID,
+	})
 }
 
 func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
@@ -137,13 +147,13 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	if err := db.DB.First(&order, id).Error; err != nil {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
-			Error: "Nije pronadjen: " + err.Error(),
+			Error:   "Nije pronadjen: " + err.Error(),
 		})
 	}
 	if order.Status != "pending" {
 		return c.Status(400).JSON(types.Response{
 			Success: false,
-			Error: "Nije na cekanju",
+			Error:   "Nije na cekanju",
 		})
 	}
 	if decline {
@@ -157,8 +167,8 @@ func ApproveDeclineOrder(c *fiber.Ctx, decline bool) error {
 	db.DB.Save(&order)
 	return c.JSON(types.Response{
 		Success: true,
-		Data: order.ID,
-	});
+		Data:    order.ID,
+	})
 }
 
 func DeclineOrder(c *fiber.Ctx) error {
@@ -216,7 +226,7 @@ func InitRoutes(app *fiber.App) {
 	//   required: true
 	//   schema:
 	//      $ref: '#/definitions/CreateOrderRequest'
-	app.Post("/orders", CreateOrder)
+	app.Post("/orders", middlewares.Auth, CreateOrder)
 	// swagger:operation POST /orders/{id}/decline DeclineOrder
 	//
 	// Odbijanje naloga.
@@ -228,7 +238,7 @@ func InitRoutes(app *fiber.App) {
 	//   description: ID naloga
 	//   type: integer
 	//   required: true
-	app.Post("/orders/:id/decline", DeclineOrder)
+	app.Post("/orders/:id/decline", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), DeclineOrder)
 	// swagger:operation POST /orders/{id}/approve ApproveOrder
 	//
 	// Odobrenje naloga.
@@ -240,5 +250,5 @@ func InitRoutes(app *fiber.App) {
 	//   description: ID naloga
 	//   type: integer
 	//   required: true
-	app.Post("/orders/:id/approve", ApproveOrder)
+	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), ApproveOrder)
 }

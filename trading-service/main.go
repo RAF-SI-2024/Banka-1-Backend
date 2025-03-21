@@ -4,8 +4,10 @@ import (
 	"os"
 	"time"
 
-	"banka1.com/listings/futures"
+	options "banka1.com/listings/Options"
 	"banka1.com/middlewares"
+
+	"banka1.com/listings/futures"
 	"banka1.com/routes"
 
 	"banka1.com/controllers"
@@ -13,7 +15,6 @@ import (
 	"banka1.com/exchanges"
 	"banka1.com/listings/finhub"
 	"banka1.com/listings/forex"
-	"banka1.com/listings/options"
 	"banka1.com/listings/stocks"
 	"banka1.com/orders"
 	"banka1.com/types"
@@ -38,7 +39,7 @@ func main() {
 		log.Printf("Warning: Failed to load exchanges: %v", err)
 	}
 
-	go func() {
+	func() {
 		log.Println("Starting to load default stocks...")
 		stocks.LoadDefaultStocks()
 		log.Println("Finished loading default stocks")
@@ -593,6 +594,7 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 	case "Stock":
 		{
 			security = types.Security{
+				ID:        l.ID,
 				Ticker:    l.Ticker,
 				Name:      l.Name,
 				Type:      l.Type,
@@ -606,6 +608,7 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 	case "Forex":
 		{
 			security = types.Security{
+				ID:        l.ID,
 				Ticker:    l.Ticker,
 				Name:      l.Name,
 				Type:      l.Type,
@@ -624,6 +627,7 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 			}
 			settlementDate := future.SettlementDate.Format("2006-01-02")
 			security = types.Security{
+				ID:             l.ID,
 				Ticker:         l.Ticker,
 				Name:           l.Name,
 				Type:           l.Type,
@@ -637,7 +641,27 @@ func listingToSecurity(l *types.Listing) (*types.Security, error) {
 		}
 	case "Option":
 		{
+			var option types.Option
+			if result := db.DB.Where("listing_id = ?", l.ID).First(&option); result.Error != nil {
+				return nil, result.Error
+			}
+			security = types.Security{
+				ID:             l.ID,
+				Ticker:         l.Ticker,
+				Name:           l.Name,
+				Type:           l.Type,
+				Exchange:       l.Exchange.Name,
+				LastPrice:      float64(l.Price),
+				AskPrice:       float64(l.Ask),
+				BidPrice:       float64(l.Bid),
+				Volume:         int64(l.ContractSize * 10),
+				StrikePrice:    &option.StrikePrice,
+				OptionType:     &option.OptionType,
+				SettlementDate: nil,
+			}
+
 		}
+
 	}
 	return &security, nil
 }

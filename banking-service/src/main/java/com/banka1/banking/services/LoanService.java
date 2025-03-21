@@ -164,29 +164,71 @@ public class LoanService {
     }
 
     public Loan updateLoanRequest(Long loanId, LoanUpdateDTO loanUpdateDTO) {
-        Loan loan = loanRepository.findById(loanId).orElse(null);
-        if (loan == null) {return null;}
-        String message = "";
-        if (loanUpdateDTO.getApproved()) {
-            loan.setPaymentStatus(PaymentStatus.APPROVED);
-            message = "Vaš kredit je odobren.";
-        } else {
-            loan.setPaymentStatus(PaymentStatus.DENIED);
-            message = "Vaš kredit je odbijen.";
+        try {
+            // Find the loan
+            Loan loan = loanRepository.findById(loanId).orElse(null);
+            if (loan == null) {return null;}
+            
+            // Update loan status based on approval decision
+            String emailMessage = "";
+            if (loanUpdateDTO.getApproved()) {
+                loan.setPaymentStatus(PaymentStatus.APPROVED);
+                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() + 
+                              " " + loan.getCurrencyType() + " je odobren.";
+            } else {
+                loan.setPaymentStatus(PaymentStatus.DENIED);
+                emailMessage = "Vaš zahtev za kredit u iznosu " + loan.getLoanAmount() + 
+                              " " + loan.getCurrencyType() + " je odbijen.";
+                
+                // Store rejection reason if provided
+                if (loanUpdateDTO.getReason() != null && !loanUpdateDTO.getReason().isEmpty()) {
+                    emailMessage += "\nRazlog: " + loanUpdateDTO.getReason();
+                }
+            }
+            
+            // Save the updated loan first
+            Loan savedLoan = loanRepository.save(loan);
+            
+            // Direct DB approach to get user email
+            Account acc = loan.getAccount();
+            sendLoanNotification(acc, emailMessage, loanId);
+            
+            System.out.println("Loan " + loanId + " status updated to: " + 
+                    (loanUpdateDTO.getApproved() ? "APPROVED" : "DENIED"));
+            
+            return savedLoan;
+        } catch (Exception e) {
+            System.err.println("Error updating loan: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error updating loan: " + e.getMessage());
         }
-
-        CustomerDTO owner = userServiceCustomer.getCustomerById(loan.getAccount().getOwnerID());
-        NotificationDTO emailDTO = new NotificationDTO();
-        emailDTO.setSubject("Promena statusa kredita");
-        emailDTO.setEmail(owner.getEmail());
-        emailDTO.setMessage(message+"\n"+loanUpdateDTO.getReason());
-        emailDTO.setFirstName(owner.getFirstName());
-        emailDTO.setLastName(owner.getLastName());
-        emailDTO.setType("email");
-
-        jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
-
-        return loanRepository.save(loan);
+    }
+    
+    private void sendLoanNotification(Account acc, String emailMessage, Long loanId) {
+        try {
+            // Create notification directly
+            NotificationDTO emailDTO = new NotificationDTO();
+            emailDTO.setSubject("Obaveštenje o statusu kredita");
+            emailDTO.setMessage("Nije prosao loan jbg");
+            emailDTO.setType("email");
+            
+            // Try getting customer from service first
+            try {
+                CustomerDTO customer = userServiceCustomer.getCustomerById(acc.getOwnerID());
+                emailDTO.setEmail(customer.getEmail());
+                
+                // Send notification using JMS
+                System.out.println("Sending loan notification for loan " + loanId + " to user ID " + customer.getEmail());
+                jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+                
+            } catch (Exception e) {
+                System.err.println("Failed to send notification: " + e.getMessage());
+                // Still allow the loan update to succeed even if notification fails
+            }
+        } catch (Exception e) {
+            System.err.println("Error in notification process: " + e.getMessage());
+            // Don't propagate notification errors to the main workflow
+        }
     }
 
     public List<Loan> getAllLoans() {
