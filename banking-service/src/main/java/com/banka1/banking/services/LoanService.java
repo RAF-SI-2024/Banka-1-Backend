@@ -8,6 +8,7 @@ import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Installment;
 import com.banka1.banking.models.Loan;
+import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.LoanType;
 import com.banka1.banking.models.helper.PaymentStatus;
@@ -195,6 +196,8 @@ public class LoanService {
             
             System.out.println("Loan " + loanId + " status updated to: " + 
                     (loanUpdateDTO.getApproved() ? "APPROVED" : "DENIED"));
+
+//            acc.setBalance(acc.getBalance() + loan.getLoanAmount());
             
             return savedLoan;
         } catch (Exception e) {

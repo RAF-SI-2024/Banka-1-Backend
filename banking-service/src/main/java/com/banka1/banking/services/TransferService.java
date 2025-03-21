@@ -66,10 +66,11 @@ public class TransferService {
         Transfer transfer = transferRepository.findById(transferId)
                 .orElseThrow(() -> new RuntimeException("Transfer not found"));
 
+        System.out.println("Transfer type: " + transfer.getType());
         switch (transfer.getType()) {
             case INTERNAL:
                 return processInternalTransfer(transferId);
-            case EXTERNAL:
+            case EXTERNAL: case FOREIGN:
                 return processExternalTransfer(transferId);
             case EXCHANGE:
                 throw new RuntimeException("Exchange transfer not implemented");
