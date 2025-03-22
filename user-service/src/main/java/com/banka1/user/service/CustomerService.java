@@ -69,6 +69,15 @@ public class CustomerService {
         return CustomerMapper.customerToDto(customer);
     }
 
+    public CustomerResponse findByEmail(String email) {
+        var customerOptional = customerRepository.findByEmail(email);
+        if(customerOptional.isEmpty())
+            return null;
+        var customer = customerOptional.get();
+        return CustomerMapper.customerToDto(customer);
+    }
+
+
     public CustomerPageResponse search(int page, int pageSize, Optional<String> sortField, Optional<String> sortOrder, Optional<String> filterField, Optional<String> filterValueOptional) {
         var direction = Sort.Direction.ASC;
         if (sortOrder.isPresent()) {

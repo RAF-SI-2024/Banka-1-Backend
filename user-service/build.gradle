@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
     implementation project(":common")
+    implementation project(path: ':common')
 
     runtimeOnly 'org.aspectj:aspectjweaver'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'

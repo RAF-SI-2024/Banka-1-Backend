@@ -30,4 +30,18 @@ public class CustomerListener {
         }
         jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
     }
+
+    @JmsListener(destination = "${destination.customer.email}", concurrency = "5-10")
+    public void onGetCustomerByEmailMessage(Message message) throws JMSException {
+        var email = messageHelper.getMessage(message, String.class);
+        CustomerResponse customer = null;
+        try {
+            if (email != null)
+                customer = customerService.findByEmail(email);
+        } catch (Exception e) {
+            log.error("CustomerListener (by email): ", e);
+        }
+        jmsTemplate.convertAndSend(message.getJMSReplyTo(), messageHelper.createTextMessage(customer));
+    }
+
 }

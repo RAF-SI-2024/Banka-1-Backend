@@ -36,6 +36,47 @@ VALUES ('CAD', 'Canadian Dollar', 'Canada', 'C$');
 INSERT INTO currency (code, name, country, symbol)
 VALUES ('AUD', 'Australian Dollar', 'Australia', 'A$');
 
+INSERT INTO company (id, name, address, vat_number, company_number)
+VALUES
+(1, 'Naša Banka', 'Bulevar Banka 1', '111111111', '11111111'),
+(2, 'Naša Država', 'Bulevar Država 1', '222222222', '22222222');
+
+INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
+                     daily_spent, monthly_spent, currency_type, expiration_date, created_date,
+                     employeeid, monthly_maintenance_fee, reserved_balance, ownerid,
+                     status, type, subtype)
+VALUES
+-- RSD - domaća valuta - 10 milijardi
+(1,'111000100000000199', 10000000000.0, 1, 10000000.0, 100000000.0, 0.0, 0.0, 'RSD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+-- Ostale valute - 10 miliona
+(2,'111000100000000299', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'EUR',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(3,'111000100000000399', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'USD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(4,'111000100000000499', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'CHF',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(5,'111000100000000599', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'GBP',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(6,'111000100000000699', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'JPY',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(7,'111000100000000799', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'CAD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+
+(8,'111000100000000899', 10000000.0, 1, 1000000.0, 1000000.0, 0.0, 0.0, 'AUD',
+ 2029030500000, 2025030500000, 1, 0.0, 0.0, 7, 'ACTIVE', 'BANK', 'STANDARD'),
+-- RSD - domaća valuta za nasu drzavu
+(9,'111000100000001199', 10000000000.0, 1, 10000000.0, 100000000.0, 0.0, 0.0, 'RSD',
+2029030500000, 2025030500000, 1, 0.0, 0.0, 8, 'ACTIVE', 'COUNTRY', 'STANDARD');
+
+
+
 -- User accounts - Jovan (ID: 3)
 INSERT INTO account (account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,
