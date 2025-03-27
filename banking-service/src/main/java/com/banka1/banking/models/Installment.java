@@ -26,29 +26,33 @@ public class Installment {
     private CurrencyType currencyType; // Valuta rate i kredita
 
     @Column(nullable = false)
-    private Long expectedDueDate; // Očekivani datum dospeća
+    private LocalDate expectedDueDate; // Očekivani datum dospeća
 
     @Column
     private Long actualDueDate; // Pravi datum dospeća
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus paymentStatus;
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @ManyToOne
     @JoinColumn(name = "loan_id", nullable = false)
     private Loan loan;
     @Column(nullable = false)
-    private Boolean isPaid;
+    private Boolean isPaid = false;
+    @Column
+    private LocalDate retryDate; // Datum sledećeg pokušaja naplate
     @Column(nullable = false)
-    private Long retryDate; // Datum sledećeg pokušaja naplate
+    private Integer attemptCount = 0; // Broj pokušaja naplate
+
     @Column(nullable = false)
-    private Integer attemptCount; // Broj pokušaja naplate
+    private Integer installmentNumber;
 
-
+    @Column(nullable = false)
+    private boolean lawsuit = false;
 
     @ManyToOne
-    @JoinColumn(name = "transaction_id", nullable = false)
+    @JoinColumn(name = "transaction_id")
     Transaction transaction;
 
 }

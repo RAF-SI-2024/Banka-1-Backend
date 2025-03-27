@@ -2,13 +2,15 @@ package com.banka1.banking.models;
 
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.InterestType;
-import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.models.helper.LoanType;
+import com.banka1.banking.models.helper.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -24,7 +26,7 @@ public class Loan {
     @Enumerated(EnumType.STRING)
     private LoanType loanType;
 
-    @Column
+    @Column(nullable = false)
     private Integer numberOfInstallments;
 
     @Column(nullable = false)
@@ -46,28 +48,35 @@ public class Loan {
     private Double effectiveRate;
 
     @Column(nullable = false)
-    private Double loanAmount;
+    private Double penalty = 0.0;
 
     @Column(nullable = false)
-    private Integer duration; // in months
+    private Double loanAmount;
 
     @Column(nullable = false)
     private Long createdDate;
 
-    @Column(nullable = false)
+    @Column
     private Long allowedDate;
 
     @Column(nullable = false)
     private Double monthlyPayment;
 
     @Column(nullable = false)
-    private Long nextPaymentDate;
+    private Integer numberOfPaidInstallments = 0;
+
+    @Column(nullable = false)
+    private LocalDate nextPaymentDate;
 
     @Column(nullable = false)
     private Double remainingAmount;
 
-    @Column
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @Column(nullable = false)
     private String loanReason;
+
     @JoinColumn(name = "account_id", nullable = false)
     @ManyToOne
     private Account account;

@@ -1,13 +1,9 @@
 package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.AccountAuthorization;
-import com.banka1.banking.models.Transfer;
-import com.banka1.banking.models.helper.TransferType;
 import com.banka1.banking.services.TransferService;
 import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.MoneyTransferDTO;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.services.TransferService;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,14 +50,25 @@ public class TransferController {
             description = "Kreira interni prenos novca između računa istog korisnika, ako su u istoj valuti."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Interni prenos uspešno kreiran",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Interni prenos uspešno kreiran.\", \n \t \"transferId\": 12345 \n} \n}"))
+        @ApiResponse(responseCode = "200", description = "Interni prenos uspešno kreiran", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": true,
+                    "data": {
+                        "message": "Interni prenos uspešno kreiran.",
+                        "transferId": 12345
+                    }
+                }
+                """))
             ),
-            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nevalidni podaci ili nedovoljno sredstava.\" }"))
-            )
+        @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": false,
+                    "error": "Nevalidni podaci ili nedovoljno sredstava."
+                }
+            """))
+        )
     })
     @PostMapping("/internal-transfer")
     @AccountAuthorization(customerOnlyOperation = true)
@@ -97,14 +104,25 @@ public class TransferController {
             description = "Kreira prenos novca između različitih korisnika ako su računi iste valute."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Prenos novca uspešno kreiran",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Transfer novca uspešno kreiran.\", \n \t \"transferId\": 12345 \n} \n}"))
+        @ApiResponse(responseCode = "200", description = "Prenos novca uspešno kreiran", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": true,
+                    "data": {
+                        "message": "Transfer novca uspešno kreiran.",
+                        "transferId": 12345
+                    }
+                }
+                """))
             ),
-            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nevalidni podaci ili nedovoljno sredstava.\" }"))
-            )
+        @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": false,
+                    "error": "Nevalidni podaci ili nedovoljno sredstava."
+                }
+            """))
+        )
     })
     @PostMapping("/money-transfer")
     @AccountAuthorization(customerOnlyOperation = true)

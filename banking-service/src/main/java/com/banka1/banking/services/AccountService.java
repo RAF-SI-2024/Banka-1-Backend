@@ -13,7 +13,6 @@ import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
 
 import com.banka1.banking.repository.TransactionRepository;
-import com.banka1.banking.utils.ResponseMessage;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 
 @Service
@@ -38,8 +34,9 @@ public class AccountService {
     private final String destinationEmail;
     private final UserServiceCustomer userServiceCustomer;
     private final CardService cardService;
+    private final BankAccountUtils bankAccountUtils;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -47,6 +44,7 @@ public class AccountService {
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
         this.cardService = cardService;
+        this.bankAccountUtils = bankAccountUtils;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
@@ -165,15 +163,16 @@ public class AccountService {
         List<Transaction> transactionsFrom = transactionRepository.findByFromAccountId(account);
         List<Transaction> transactionsTo = transactionRepository.findByToAccountId(account);
 
-        List<Transaction> allTransactions = new ArrayList<>();
-        allTransactions.addAll(transactionsFrom);
-//        allTransactions.addAll(transactionsTo);
+        List<Transaction> allTransactions = new ArrayList<>(transactionsFrom);
 
         for (Transaction transaction : transactionsTo) {
-            if (transaction.getFromAccountId().getId() != accountId) {
+            if (!Objects.equals(transaction.getFromAccountId().getId(), accountId)) {
                 allTransactions.add(transaction);
             }
         }
+
+        if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), account.getOwnerID()))
+            allTransactions.removeIf(Transaction::getBankOnly);
         return allTransactions;
     }
 

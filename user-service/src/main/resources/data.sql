@@ -153,23 +153,23 @@ VALUES (6, 'Jelena', 'Jovanovic', 'jelena@primer.rs', 'jelena',
 INSERT INTO customer_permissions (customer_id, permission)
 VALUES (6, 'READ_EMPLOYEE');
 
--- Customer: BANKA (email: bankabanka@banka1.com, password: Banka12345)
+-- Customer: BANKA (email: bankabanka@banka1.com, password: nemanjanemanja)
 INSERT INTO customer (id, first_name, last_name, email, username, phone_number,
                       birth_date, gender, address, salt_password, password)
 VALUES (7, 'Banka', 'Banka', 'bankabanka@banka1.com', 'bankabanka',
         '+381640000000', '2025-01-01', 'MALE', 'Bulevar Banka 1',
-        'salt', '$2a$10$kyoaFe8U6bMcvH0GBvH6FufT2VBSMHyE6anvNUP8HULGk6g3CPaG2');
+        'salt', '$2a$12$NcVWqq8vsDVDBLezBJAchepu9WXMUpAfwR0yF6eBjpNYogVoz6wYS');
 
 -- Permissions for BANKA
 INSERT INTO customer_permissions (customer_id, permission)
 VALUES (7, 'READ_EMPLOYEE');
 
--- Customer: DRZAVA (email: drzavadrzava@drzava1.com, password: Drzava12345)
+-- Customer: DRZAVA (email: drzavadrzava@drzava1.com, password: nemanjanemanja)
 INSERT INTO customer (id, first_name, last_name, email, username, phone_number,
                       birth_date, gender, address, salt_password, password)
 VALUES (8, 'Država', 'Država', 'drzavadrzava@drzava1.com', 'drzavadrzava',
         '+381640000001', '2025-01-01', 'FEMALE', 'Bulevar Država 1',
-        'salt', '$2a$10$vh3TI9CcSeEM7PuxEqQ2GujAZKy1Xw02OtZkjHeOt3Z77/Uqydy2a');
+        'salt', '$2a$12$NcVWqq8vsDVDBLezBJAchepu9WXMUpAfwR0yF6eBjpNYogVoz6wYS');
 
 -- Permissions for DRZAVA
 INSERT INTO customer_permissions (customer_id, permission)

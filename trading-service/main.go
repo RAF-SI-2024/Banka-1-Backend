@@ -515,7 +515,7 @@ func main() {
 		ticker := c.Params("ticker")
 
 		var listing types.Listing
-		if result := db.DB.Preload("Exchange").Where("ticker = ? AND type = ?", ticker, "Stock").First(&listing); result.Error != nil {
+		if result := db.DB.Preload("Exchange").Where("ticker = ? AND type = ?", ticker, "Future").First(&listing); result.Error != nil {
 			return c.Status(404).JSON(types.Response{
 				Success: false,
 				Data:    nil,
@@ -528,7 +528,7 @@ func main() {
 			return c.Status(500).JSON(types.Response{
 				Success: false,
 				Data:    nil,
-				Error:   "Failed to fetch stock details: " + result.Error.Error(),
+				Error:   "Failed to fetch future details: " + result.Error.Error(),
 			})
 		}
 

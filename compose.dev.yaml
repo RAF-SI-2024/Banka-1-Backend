@@ -30,7 +30,3 @@ services:
       POSTGRES_USER: user_service_user
       POSTGRES_PASSWORD: user_service_password
       POSTGRES_DB: user_service_db
-volumes:
-  dev_activemq_data: null
-  dev_banking_db_data: null
-  dev_user_db_data: null

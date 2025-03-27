@@ -19,9 +19,7 @@ public class FirebaseService {
     }
 
     public void sendNotificationToCustomer(String title, String body, Long customerId, Map<String, String> data) {
-        customerDeviceRepository.findByCustomerId(customerId).forEach(customerDevice -> {
-            sendNotification(title, body, customerDevice.getDeviceToken(), data);
-        });
+        customerDeviceRepository.findByCustomerId(customerId).forEach(customerDevice -> sendNotification(title, body, customerDevice.getDeviceToken(), data));
     }
 
     public void broadcastNotification(String title, String body, Map<String, String> data) {

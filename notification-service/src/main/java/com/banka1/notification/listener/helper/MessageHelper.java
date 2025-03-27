@@ -1,6 +1,5 @@
 package com.banka1.notification.listener.helper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
@@ -15,8 +14,8 @@ import java.util.stream.Collectors;
 @Component
 public class MessageHelper {
 
-    private Validator validator;
-    private ObjectMapper objectMapper;
+    private final Validator validator;
+    private final ObjectMapper objectMapper;
 
     public MessageHelper(Validator validator, ObjectMapper objectMapper) {
         this.validator = validator;

@@ -46,15 +46,10 @@ public class LoanServiceTest {
     void setUp() {
         createLoanDTO = new CreateLoanDTO();
         createLoanDTO.setAccountId(1L);
-        createLoanDTO.setMonthlyPayment(10.0);
-        createLoanDTO.setDuration(12);
         createLoanDTO.setLoanAmount(20000.0);
-        createLoanDTO.setEffectiveRate(0.4);
-        createLoanDTO.setNominalRate(0.21);
         createLoanDTO.setInterestType(InterestType.FIXED);
         createLoanDTO.setNumberOfInstallments(12);
         createLoanDTO.setLoanType(LoanType.CASH);
-        createLoanDTO.setCurrencyType(CurrencyType.RSD); // Add this line
     }
     @Test
     void testCreateLoanSuccessfully() {
@@ -74,9 +69,6 @@ public class LoanServiceTest {
         assertEquals(createLoanDTO.getNumberOfInstallments(), result.getNumberOfInstallments());
         assertEquals(createLoanDTO.getInterestType(), result.getInterestType());
         assertEquals(createLoanDTO.getLoanAmount(), result.getLoanAmount());
-        assertEquals(createLoanDTO.getNominalRate(), result.getNominalRate());
-        assertEquals(createLoanDTO.getEffectiveRate(), result.getEffectiveRate());
-        assertEquals(createLoanDTO.getNumberOfInstallments(), result.getDuration());
         assertEquals(PaymentStatus.PENDING, result.getPaymentStatus());
         assertEquals(account, result.getAccount());
 

@@ -42,10 +42,10 @@ public class Customer {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = true)
+    @Column
     private String password;
 
-    @Column(nullable = true)
+    @Column
     private String saltPassword;
 
     private String verificationCode;

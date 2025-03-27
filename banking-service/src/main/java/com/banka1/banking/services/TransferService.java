@@ -1,6 +1,9 @@
 package com.banka1.banking.services;
 
-import com.banka1.banking.dto.*;
+import com.banka1.banking.dto.CustomerDTO;
+import com.banka1.banking.dto.InternalTransferDTO;
+import com.banka1.banking.dto.MoneyTransferDTO;
+import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Currency;
@@ -19,7 +22,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -334,6 +336,30 @@ public class TransferService {
         return !fromAccount.getOwnerID().equals(toAccount.getOwnerID());
     }
 
+    public Transfer createInternalTransferEntity(Account fromAccount, Account toAccount, double amount, CustomerDTO customerData, String description) {
+        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
+                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+
+        Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
+                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+
+        String firstName = customerData.getFirstName();
+        String lastName = customerData.getLastName();
+
+        Transfer transfer = new Transfer();
+        transfer.setFromAccountId(fromAccount);
+        transfer.setToAccountId(toAccount);
+        transfer.setAmount(amount);
+        transfer.setStatus(TransferStatus.PENDING);
+        transfer.setType(TransferType.INTERNAL);
+        transfer.setPaymentDescription(description);
+        transfer.setReceiver(firstName + " " + lastName);
+        transfer.setFromCurrency(fromCurrency);
+        transfer.setToCurrency(toCurrency);
+        transfer.setCreatedAt(System.currentTimeMillis());
+
+        return transferRepository.saveAndFlush(transfer);
+    }
 
     public Long createInternalTransfer(InternalTransferDTO internalTransferDTO){
 
@@ -344,12 +370,6 @@ public class TransferService {
 
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
-
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
-                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
-
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
-                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
             CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
@@ -362,19 +382,7 @@ public class TransferService {
             String firstName = customerData.getFirstName();
             String lastName = customerData.getLastName();
 
-            Transfer transfer = new Transfer();
-            transfer.setFromAccountId(fromAccount);
-            transfer.setToAccountId(toAccount);
-            transfer.setAmount(internalTransferDTO.getAmount());
-            transfer.setStatus(TransferStatus.PENDING);
-            transfer.setType(TransferType.INTERNAL);
-            transfer.setPaymentDescription("Interni prenos");
-            transfer.setReceiver(firstName + " " + lastName);
-            transfer.setFromCurrency(fromCurrency);
-            transfer.setToCurrency(toCurrency);
-            transfer.setCreatedAt(System.currentTimeMillis());
-
-            transferRepository.saveAndFlush(transfer);
+            var transfer = createInternalTransferEntity(fromAccount, toAccount, internalTransferDTO.getAmount(), customerData, "Interni prenos");
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);
@@ -406,6 +414,38 @@ public class TransferService {
         return null;
     }
 
+    public Transfer createMoneyTransferEntity(Account fromAccount, Account toAccount, MoneyTransferDTO moneyTransferDTO) {
+        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
+                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+
+        Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
+                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+
+        Long customerId = fromAccount.getOwnerID();
+        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+
+        if (customerData == null ) {
+            throw new IllegalArgumentException("Korisnik nije pronađen");
+        }
+
+        Transfer transfer = new Transfer();
+        transfer.setFromAccountId(fromAccount);
+        transfer.setToAccountId(toAccount);
+        transfer.setAmount(moneyTransferDTO.getAmount());
+        transfer.setReceiver(moneyTransferDTO.getReceiver());
+        transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
+        transfer.setStatus(TransferStatus.PENDING);
+        transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
+        transfer.setFromCurrency(fromCurrency);
+        transfer.setToCurrency(toCurrency);
+        transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
+        transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
+        transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
+        transfer.setCreatedAt(System.currentTimeMillis());
+
+        return transferRepository.saveAndFlush(transfer);
+    }
+
     public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
 
         Optional<Account> fromAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getFromAccountNumber());
@@ -415,12 +455,6 @@ public class TransferService {
 
             Account fromAccount = fromAccountOtp.get();
             Account toAccount = toAccountOtp.get();
-
-            Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
-                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
-
-            Currency toCurrency = currencyRepository.findByCode(toAccount.getCurrencyType())
-                    .orElseThrow(() -> new IllegalArgumentException("Greska"));
 
             Long customerId = fromAccount.getOwnerID();
             CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
@@ -433,22 +467,7 @@ public class TransferService {
             String firstName = customerData.getFirstName();
             String lastName = customerData.getLastName();
 
-            Transfer transfer = new Transfer();
-            transfer.setFromAccountId(fromAccount);
-            transfer.setToAccountId(toAccount);
-            transfer.setAmount(moneyTransferDTO.getAmount());
-            transfer.setReceiver(moneyTransferDTO.getReceiver());
-            transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
-            transfer.setStatus(TransferStatus.PENDING);
-            transfer.setType(fromCurrency.equals(toCurrency) ? TransferType.EXTERNAL : TransferType.FOREIGN);
-            transfer.setFromCurrency(fromCurrency);
-            transfer.setToCurrency(toCurrency);
-            transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
-            transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
-            transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
-            transfer.setCreatedAt(System.currentTimeMillis());
-
-            transferRepository.saveAndFlush(transfer);
+            var transfer = createMoneyTransferEntity(fromAccount, toAccount, moneyTransferDTO);
 
             String otpCode = otpTokenService.generateOtp(transfer.getId());
             transfer.setOtp(otpCode);

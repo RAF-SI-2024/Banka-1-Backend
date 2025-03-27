@@ -2,6 +2,7 @@ package com.banka1.banking.repository;
 
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
+import com.banka1.banking.models.Transfer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +14,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByFromAccountId(Account fromAccountId);
     List<Transaction> findByToAccountId(Account toAccountId);
     List<Transaction> findByFromAccountIdIn(List<Account> fromAccountId);
+    Optional<Transaction> findByTransferId(Long transferId);
     List<Transaction> findByFromAccountIdInOrToAccountIdIn(List<Account> fromAccounts, List<Account> toAccounts);
 }

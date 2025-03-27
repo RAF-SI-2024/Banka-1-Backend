@@ -32,19 +32,27 @@ public class ExchangeController {
 
     private final ExchangeService exchangeService;
 
-    @Operation(
-            summary = "Transfer sa konverzijom",
-            description = "Izvršava transfer novca između različitih valuta za isti račun korisnika."
-    )
+    @Operation(summary = "Transfer sa konverzijom", description = "Izvršava transfer novca između različitih valuta za isti račun korisnika.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Interni prenos sa konverzijom uspešno izvršen",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": true, { \"data\": \n \t \"message\": \"Interni prenos sa konverzijom uspešno izvršen.\", \n \t \"transferId\": 12345 \n} \n}"))
-            ),
-            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nevalidni podaci ili nedovoljno sredstava.\" }"))
-            )
+        @ApiResponse(responseCode = "200", description = "Interni prenos sa konverzijom uspešno izvršen", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": true,
+                    "data": {
+                        "message": "Interni prenos sa konverzijom uspešno izvršen.",
+                        "transferId": 12345
+                    }
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nedovoljno sredstava", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": false,
+                    "error": "Nevalidni podaci ili nedovoljno sredstava."
+                }
+            """))
+        )
     })
     @PostMapping
     @AccountAuthorization(customerOnlyOperation = true)
@@ -73,17 +81,25 @@ public class ExchangeController {
 
     }
 
-    @Operation(summary = "Pregled kursa pre razmene",
-            description = "Vraća kurs, iznos nakon konverzije, proviziju i krajnji iznos pre nego što korisnik potvrdi transfer.")
+    @Operation(summary = "Pregled kursa pre razmene", description = "Vraća kurs, iznos nakon konverzije, proviziju i krajnji iznos pre nego što korisnik potvrdi transfer.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"exchangeRate\": 117.5, \"convertedAmount\": 8.51, \"fee\": 0.25, \"finalAmount\": 8.26 }"))
-            ),
-            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"error\": \"Kurs nije pronađen za traženu konverziju.\" }"))
-            )
+        @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "exchangeRate": 117.5,
+                    "convertedAmount": 8.51,
+                    "fee": 0.25,
+                    "finalAmount": 8.26
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "error": "Kurs nije pronađen za traženu konverziju."
+                }
+            """))
+        )
     })
     @PostMapping("/preview")
     public ResponseEntity<?> previewExchange(@RequestBody ExchangePreviewDTO exchangePreviewDTO) {
@@ -100,17 +116,25 @@ public class ExchangeController {
         }
     }
 
-    @Operation(summary = "Pregled kursa za stranu valutu pre razmene",
-            description = "Vraća kurs za obe strane valute, ukupnu proviziju i konačan iznos nakon oduzimanja provizije.")
+    @Operation(summary = "Pregled kursa za stranu valutu pre razmene", description = "Vraća kurs za obe strane valute, ukupnu proviziju i konačan iznos nakon oduzimanja provizije.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija strane valute",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"firstExchangeRate\": 117.5, \"secondExchangeRate\": 105.2, \"totalFee\": 5.0, \"finalAmount\": 95.0 }"))
-            ),
-            @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{ \"error\": \"Kurs nije pronađen za traženu konverziju.\" }"))
-            )
+        @ApiResponse(responseCode = "200", description = "Uspešno izračunata konverzija strane valute", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "firstExchangeRate": 117.5,
+                    "secondExchangeRate": 105.2,
+                    "totalFee": 5.0,
+                    "finalAmount": 95.0
+                }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Nevalidni podaci ili nepostojeći kurs", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "error": "Kurs nije pronađen za traženu konverziju."
+                }
+            """))
+        )
     })
     @PostMapping("/preview-foreign")
     public ResponseEntity<?> previewExchangeForeign(@RequestBody ExchangePreviewDTO exchangePreviewDTO) {

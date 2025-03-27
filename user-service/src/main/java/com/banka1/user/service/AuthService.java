@@ -8,7 +8,6 @@ import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.common.model.Position;
 import com.banka1.common.service.implementation.GenericAuthService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,6 @@ public class AuthService extends GenericAuthService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
 
-    @Autowired
     public AuthService(CustomerRepository customerRepository, EmployeeRepository employeeRepository) {
         this.customerRepository = customerRepository;
         this.employeeRepository = employeeRepository;

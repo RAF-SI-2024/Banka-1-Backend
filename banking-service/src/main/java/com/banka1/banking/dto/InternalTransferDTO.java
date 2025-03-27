@@ -1,12 +1,10 @@
 package com.banka1.banking.dto;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class InternalTransferDTO {
 
     private Long fromAccountId;

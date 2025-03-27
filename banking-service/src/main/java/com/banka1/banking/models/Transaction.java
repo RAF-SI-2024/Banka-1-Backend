@@ -45,6 +45,4 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "transfer_id", nullable = false)
     private Transfer transfer;
-
-    private Long loanId; // ukoliko je uplata za kredit, mora biti postavljen id kredita
 }

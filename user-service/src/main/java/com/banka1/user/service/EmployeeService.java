@@ -16,13 +16,9 @@ import org.springframework.data.domain.*;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
@@ -35,6 +31,7 @@ public class EmployeeService {
     private final JmsTemplate jmsTemplate;
     private final ModelMapper modelMapper;
     private final MessageHelper messageHelper;
+    private final Random random = new Random();
 
     @Value("${destination.email}")
     private String destinationEmail;
@@ -42,11 +39,22 @@ public class EmployeeService {
     private String frontendUrl;
 
     public EmployeeResponse findById(String id) {
-        var employeeOptional = employeeRepository.findById(Long.parseLong(id));
+        return findById(Long.parseLong(id));
+    }
+
+    public EmployeeResponse findById(long id) {
+        var employeeOptional = employeeRepository.findById(id);
         if (employeeOptional.isEmpty())
             return null;
         var employee = employeeOptional.get();
         return getEmployeeResponse(employee);
+    }
+
+    public EmployeeResponse findInLegal() {
+        var employees = employeeRepository.findByDepartment(Department.LEGAL);
+        if (employees.isEmpty())
+            return null;
+        return getEmployeeResponse(employees.get(random.nextInt(employees.size())));
     }
 
 
@@ -125,11 +133,6 @@ public class EmployeeService {
         if (employee.getEmail().equals(currentUserEmail)) {
             throw new AccessDeniedException("Ne možete obrisati sami sebe");
         }
-
-//        // Samo admin može brisati admina
-//        if (employee.getPermissions().contains("admin") && !currentUserHasAdminPermission()) {
-//            throw new AccessDeniedException("Samo admin može brisati drugog admina");
-//        }
 
         employeeRepository.delete(employee);
     }

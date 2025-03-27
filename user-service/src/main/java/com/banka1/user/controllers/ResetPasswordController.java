@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users/reset-password")
 @Tag(name = "Reset Password API", description = "API za resetovanje lozinke")
 public class ResetPasswordController {
 
-    @Autowired
-    private ResetPasswordService resetPasswordService;
+    private final ResetPasswordService resetPasswordService;
 
     @PutMapping("/")
     @Operation(summary = "Podnošenje zahteva za resetovanje lozinke")
@@ -54,7 +54,6 @@ public class ResetPasswordController {
             resetPasswordService.requestPasswordReset(resetPasswordRequest);
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("message", ResponseMessage.PASSWORD_RESET_REQUEST_SUCCESS.toString()), null);
         } catch (Exception e) {
-            System.out.println(e);
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }

@@ -1,7 +1,6 @@
 package com.banka1.user.controllers;
 
 import com.banka1.user.DTO.request.CreateEmployeeRequest;
-import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.DTO.request.UpdateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.aspect.Authorization;
@@ -17,24 +16,24 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/users/employees")
 @Tag(name = "Employee API", description = "API za upravljanje zaposlenima")
 public class EmployeeController {
-    @Autowired
-    private EmployeeService employeeService;
+
+    private final EmployeeService employeeService;
 
     @Operation(
         summary = "Dobavljanje informacija o zaposlenom datog ID-a"
@@ -124,7 +123,7 @@ public class EmployeeController {
         )
     })
     public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest createEmployeeRequest) {
-        Employee savedEmployee = null;
+        Employee savedEmployee;
         try {
             savedEmployee = employeeService.createEmployee(createEmployeeRequest);
         } catch (RuntimeException e) {

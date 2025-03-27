@@ -1,5 +1,4 @@
 package com.banka1.banking.services;
-import com.banka1.banking.services.TransferService;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.Transfer;
@@ -81,9 +80,7 @@ public class ExternalTransferServiceTest {
         transfer.setAmount(1500.0); // Više nego što ima na računu
         when(transferRepository.findById(1L)).thenReturn(Optional.of(transfer));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            transferService.processInternalTransfer(1L);
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> transferService.processInternalTransfer(1L));
 
         assertEquals("Insufficient funds", exception.getMessage());
         assertEquals(TransferStatus.FAILED, transfer.getStatus());
@@ -98,9 +95,7 @@ public class ExternalTransferServiceTest {
         transfer.setStatus(TransferStatus.COMPLETED);
         when(transferRepository.findById(1L)).thenReturn(Optional.of(transfer));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            transferService.processInternalTransfer(1L);
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> transferService.processInternalTransfer(1L));
 
         assertEquals("Transfer is not in pending state", exception.getMessage());
 

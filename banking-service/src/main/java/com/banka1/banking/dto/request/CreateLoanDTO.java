@@ -1,6 +1,5 @@
 package com.banka1.banking.dto.request;
 
-import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.InterestType;
 import com.banka1.banking.models.helper.LoanType;
 import jakarta.validation.constraints.NotNull;
@@ -8,24 +7,24 @@ import lombok.Data;
 
 @Data
 public class CreateLoanDTO {
+    @NotNull
     private String loanPurpose;
+    @NotNull
     private LoanType loanType;
+    @NotNull
     private Integer numberOfInstallments;
+    @NotNull
     private InterestType interestType;
+    @NotNull
     private Double loanAmount;
+    @NotNull
     private Double salaryAmount;
+    @NotNull
     private String employmentStatus;
-    private Integer employmentDuration;  
-    private String phoneNumber;
-    private CurrencyType currencyType;
-    
-    // Optional fields from before
-    private Double nominalRate;
-    private Double effectiveRate;
-    private Integer duration;
-    private Long allowedDate;
-    private Double monthlyPayment;
-    
+    @NotNull
+    private Integer employmentDuration;
+    @NotNull
+    private  String phoneNumber;
     @NotNull
     private Long accountId;
 }

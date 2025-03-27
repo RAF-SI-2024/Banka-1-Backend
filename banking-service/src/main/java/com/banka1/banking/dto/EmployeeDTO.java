@@ -1,18 +1,19 @@
-package com.banka1.user.DTO.response;
+package com.banka1.banking.dto;
 
+import com.banka1.common.model.Department;
 import com.banka1.common.model.Permission;
-import com.banka1.user.model.helper.Gender;
 import com.banka1.common.model.Position;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @RequiredArgsConstructor
-public class CustomerResponse {
+public class EmployeeDTO {
     @NonNull
     private Long id;
 
@@ -26,10 +27,7 @@ public class CustomerResponse {
     private String username;
 
     @NonNull
-    private String birthDate;
-
-    @NonNull
-    private Gender gender;
+    private String birthDate; // Format: "YYYY-MM-DD"
 
     @NonNull
     private String email;
@@ -39,6 +37,18 @@ public class CustomerResponse {
 
     @NonNull
     private String address;
+
+    @NonNull
+    private Position position;
+
+    @NonNull
+    private Department department;
+
+    @NonNull
+    private Boolean active;
+
+    @NonNull
+    private Boolean isAdmin;
 
     @NonNull
     private List<Permission> permissions;

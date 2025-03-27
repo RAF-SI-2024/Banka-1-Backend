@@ -83,7 +83,7 @@ public class AuthAspect {
         Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::toString).collect(Collectors.toSet());
 
         // Moguće je da korisnik ima i više permisija nego što je potrebno
-        if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.size() == 0 || possiblePositions.contains(claims.get("position", String.class)))) {
+        if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.isEmpty() || possiblePositions.contains(claims.get("position", String.class)))) {
             return joinPoint.proceed();
         }
 

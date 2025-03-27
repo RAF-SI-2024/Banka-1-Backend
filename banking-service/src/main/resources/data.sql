@@ -6,6 +6,7 @@ TRUNCATE TABLE transaction CASCADE;
 TRUNCATE TABLE account CASCADE;
 TRUNCATE TABLE company CASCADE;
 TRUNCATE TABLE currency CASCADE;
+TRUNCATE TABLE rate_change CASCADE;
 
 -- Reset sequences after truncating tables
 ALTER SEQUENCE account_id_seq RESTART WITH 100;
@@ -186,100 +187,100 @@ VALUES (3, '111000100366112220', 'Jelena', 'Jovanovic');
 
 -- Loans
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Home renovation', 100);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        22000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        500000.0, 'Home renovation', 100, '+123456789');
 
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Home renovation, attempt 2', 100);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP),
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        22000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        500000.0, 'Home renovation, attempt 2', 100, '+123456789');
 
 -- User accounts - Marko (ID: 1)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Home renovation', 100);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 500000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        22000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        500000.0, 'Home renovation', 100, '+123456789');
 
 -- User accounts - Anastasija (ID: 2)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (24, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        22916.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Medical Expenses', 2);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (24, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        22916.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        500000.0, 'Medical Expenses', 2, '+123456789');
 
 -- User accounts - Jovan (ID: 3)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (12, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 5000.0, 12,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        416.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        5000.0, 'Travel', 3);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (12, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 5000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        416.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        5000.0, 'Travel', 3, '+123456789');
 
 -- User accounts - Nemanja  (ID: 4)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (2, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 5000.0, 5,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        2500.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        5000.0, 'Investment', 4);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (2, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 5000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        2500.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        5000.0, 'Investment', 4, '+123456789');
 
 -- User accounts - Nikola  (ID: 5)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (12, 'CASH', 'RSD', 'FIXED', 'PAID_OFF', 5.5, 6.0, 120000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        10000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        0.0, 'Starting a Business ', 5);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (12, 'CASH', 'RSD', 'FIXED', 'PAID_OFF', 5.5, 6.0, 120000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        10000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        0.0, 'Starting a Business ', 5, '+123456789');
 
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        22000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        500000.0, 'Home renovation, attempt 2', 100);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (3, 'CASH', 'RSD', 'FIXED', 'PENDING', 5.5, 6.0, 550000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        22000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        500000.0, 'Home renovation, attempt 2', 100, '+123456789');
 
 -- User accounts - Jelena  (ID: 6)
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,
-                  payment_status, nominal_rate, effective_rate, loan_amount, duration,
+                  payment_status, nominal_rate, effective_rate, loan_amount,
                   created_date, allowed_date, monthly_payment, next_payment_date,
-                  remaining_amount, loan_reason, account_id)
-VALUES (12, 'CASH', 'RSD', 'FIXED', 'APPROVED', 5.5, 6.0, 120000.0, 24,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days') * 1000,
-        10000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '30 days') * 1000,
-        120000.0, 'Starting a Business ', 6);
+                  remaining_amount, loan_reason, account_id, phone_number)
+VALUES (12, 'CASH', 'RSD', 'FIXED', 'APPROVED', 5.5, 6.0, 120000.0,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP + INTERVAL '7 days'),
+        10000.0, TO_CHAR(CURRENT_TIMESTAMP + INTERVAL '30 days', 'YYYY-MM-DD'),
+        120000.0, 'Starting a Business ', 6, '+123456789');
 
 -- Accounts for Marko Marković (ID: 1)
 DELETE FROM account WHERE ownerid = 1;
@@ -393,18 +394,20 @@ VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FR
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
 VALUES (1000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 100, 1, 20, 1, 'Ustanicka 1', 'Payment for services', '123', '234', 'Payment for services', '94', 'Jelena Jovanovic', 'COMPLETED', 'INTERNAL');
 
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,100,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,100,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,100,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,20,2,'Payment for services');
 
 -- Anastasija -> Jovan
 INSERT INTO transfer(amount, completed_at, created_at, from_account_id, from_currency_id, to_account_id, to_currency_id, adress, note, otp, payment_code, payment_description, payment_reference, receiver, status, type)
 VALUES (30000.0, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000*2, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000, 11, 1, 100, 1, 'Milana Mijalkovica 1', 'Payment for shopping', '233', '234', 'Payment for shopping', '95', null, 'COMPLETED', 'INTERNAL');
 
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (30000.0,30000.0,0.0,false,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
-INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, loan_id, timestamp, to_account_id,transfer_id, description)
-VALUES (1000.0,1000.0,0.0,false,1,11,null,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (30000.0,30000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
+INSERT INTO transaction(amount, final_amount, fee, bank_only, currency_id, from_account_id, timestamp, to_account_id,transfer_id, description)
+VALUES (1000.0,1000.0,0.0,false,1,11,EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,100,3,'Payment for shopping');
 
 
+
+INSERT INTO rate_change (id) VALUES (1);
