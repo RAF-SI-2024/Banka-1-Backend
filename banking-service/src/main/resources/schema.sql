@@ -20,7 +20,9 @@ create table company
     address        varchar(255),
     company_number varchar(255),
     name           varchar(255),
-    vat_number     varchar(255)
+    vat_number     varchar(255),
+    bas            varchar(255),
+    ownerid        bigint
 );
 
 alter table company

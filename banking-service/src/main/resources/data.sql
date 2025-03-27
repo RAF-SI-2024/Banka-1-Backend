@@ -37,10 +37,10 @@ VALUES ('CAD', 'Canadian Dollar', 'Canada', 'C$');
 INSERT INTO currency (code, name, country, symbol)
 VALUES ('AUD', 'Australian Dollar', 'Australia', 'A$');
 
-INSERT INTO company (id, name, address, vat_number, company_number)
+INSERT INTO company (id, name, address, vat_number, company_number, bas, ownerid)
 VALUES
-    (1, 'Naša Banka', 'Bulevar Banka 1', '111111111', '11111111'),
-    (2, 'Naša Država', 'Bulevar Država 1', '222222222', '22222222');
+    (1, 'Naša Banka', 'Bulevar Banka 1', '111111111', '11111111','BANK',7),
+    (2, 'Naša Država', 'Bulevar Država 1', '222222222', '22222222','COUNTRY',8);
 
 INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthly_limit,
                      daily_spent, monthly_spent, currency_type, expiration_date, created_date,

@@ -21,6 +21,7 @@ public class Company {
 
     @Column private String companyNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column private BusinessActivityCode bas;
 
     @Column private Long ownerID;
