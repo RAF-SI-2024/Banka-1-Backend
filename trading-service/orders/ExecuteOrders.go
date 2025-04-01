@@ -35,12 +35,10 @@ func ExecuteStopOrders() {
 
 		if order.Direction == "buy" && order.StopPricePerUnit != nil && float64(listing.Ask) >= *order.StopPricePerUnit {
 			log.Printf("Aktiviran BUY stop order %d\n", order.ID)
-			// Pozvati funkciju za market order
-			// ExecuteMarketOrder(order)
+			MatchOrder(order)
 		} else if order.Direction == "sell" && order.StopPricePerUnit != nil && float64(listing.Bid) <= *order.StopPricePerUnit {
 			log.Printf("Aktiviran SELL stop order %d\n", order.ID)
-			// Pozvati funkciju za market order
-			// ExecuteMarketOrder(order)
+			MatchOrder(order)
 		}
 	}
 }
@@ -77,15 +75,13 @@ func ExecuteStopLimitOrders() {
 			if float64(listing.Ask) >= *order.StopPricePerUnit && float64(listing.Ask) <= *order.LimitPricePerUnit {
 				log.Printf("[STOP-LIMIT] BUY order %d aktiviran kao Limit Order (Ask: %.2f, Stop: %.2f, Limit: %.2f)\n",
 					order.ID, listing.Ask, *order.StopPricePerUnit, *order.LimitPricePerUnit)
-				// Pozvati  funkciju za limit order
-				// ExecuteLimitOrder(order)
+				MatchOrder(order)
 			}
 		} else if order.Direction == "sell" && order.StopPricePerUnit != nil && order.LimitPricePerUnit != nil {
 			if float64(listing.Bid) <= *order.StopPricePerUnit && float64(listing.Bid) >= *order.LimitPricePerUnit {
 				log.Printf("[STOP-LIMIT] SELL order %d aktiviran kao Limit Order (Bid: %.2f, Stop: %.2f, Limit: %.2f)\n",
 					order.ID, listing.Bid, *order.StopPricePerUnit, *order.LimitPricePerUnit)
-				// Pozvati funkciju za limit SELL order
-				// ExecuteLimitOrder(order)
+				MatchOrder(order)
 			}
 		}
 	}

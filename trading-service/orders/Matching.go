@@ -3,21 +3,35 @@ package orders
 import (
 	"banka1.com/db"
 	"banka1.com/types"
+	"banka1.com/middlewares"
 	"fmt"
 	"math/rand"
 	"time"
+	"strings"
+	"os"
+	"encoding/json"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func MatchOrder(order types.Order) {
 	go func() {
 		if order.AON {
-			if !canExecuteAll(order) {
+			if !CanExecuteAll(order) {
 				fmt.Println("AON: Nema dovoljno za celokupan order")
 				return
 			}
 		}
 
+        if !canPreExecute(order) {
+            fmt.Println("Nije ispunjen uslov za order")
+            return
+        }
+
+		url := fmt.Sprintf("%s/orders/execute", os.Getenv("BANKING_SERVICE"))
+
 		for order.RemainingParts != nil && *order.RemainingParts > 0 {
+			tx := db.DB.Begin()
 			quantityToExecute := 1
 			if *order.RemainingParts < quantityToExecute {
 				quantityToExecute = *order.RemainingParts
@@ -40,17 +54,73 @@ func MatchOrder(order types.Order) {
 				"status":          order.Status,
 			})
 
+			token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price)
+			var hadError bool
+
+			if err == nil {
+				agent := fiber.Post(url)
+
+				body, err := json.Marshal(map[string]string{ "token": token })
+
+				if err == nil {
+					agent.Body(body)
+					statusCode, _, errs := agent.Bytes()
+
+					if len(errs) != 0 || statusCode != 200 {
+						hadError = true
+					}
+				} else {
+					hadError = true
+				}
+			} else {
+				hadError = true
+			}
+
+			if hadError {
+				tx.Rollback()
+				fmt.Printf("Nalog %v nije izvršen\n", order.ID)
+				continue
+			} else {
+				if err := tx.Commit().Error; err != nil {
+					fmt.Printf("Nalog %v nije izvršen: %w\n", order.ID, err)
+				} else {
+					fmt.Printf("Nalog %v izvršen\n", order.ID)
+				}
+			}
+
 			delay := calculateDelay(order)
 			time.Sleep(delay)
 		}
 	}()
 }
 
+func getListingPrice(order types.Order) float64 {
+    var security types.Security
+    err := db.DB.First(&security, order.SecurityID).Error
+    if err != nil {
+        fmt.Printf("Security nije pronadjen za ID %d: %v", order.SecurityID, err)
+        return -1.0
+    }
+
+    var listing types.Listing
+    err = db.DB.Where("ticker = ?", security.Ticker).First(&listing).Error
+    if err != nil {
+        fmt.Printf("Listing nije pronadjen za Ticker %s: %v", security.Ticker, err)
+        return -1.0
+    }
+
+    if order.Direction == "sell" {
+        return float64(listing.Bid)
+    } else {
+        return float64(listing.Ask)
+    }
+}
+
 func getOrderPrice(order types.Order) float64 {
-	if order.OrderType == "MARKET" {
-		var security types.Security
-		db.DB.First(&security, order.SecurityID)
-		return security.LastPrice
+	if strings.ToUpper(order.OrderType) == "MARKET" {
+        var security types.Security
+        db.DB.First(&security, order.SecurityID)
+        return security.LastPrice
 	}
 	if order.LimitPricePerUnit != nil {
 		return *order.LimitPricePerUnit
@@ -170,7 +240,7 @@ func calculateDelay(order types.Order) time.Duration {
 	return time.Duration(delaySeconds) * time.Second
 }
 
-func canExecuteAll(order types.Order) bool {
+func getExecutableParts(order types.Order) int {
 	var matchingOrders []types.Order
 	direction := "buy"
 	if order.Direction == "buy" {
@@ -180,7 +250,6 @@ func canExecuteAll(order types.Order) bool {
 	}
 
 	db.DB.Where("security_id = ? AND direction = ? AND status = ? AND is_done = ?", order.SecurityID, direction, "approved", false).Find(&matchingOrders)
-
 	totalAvailable := 0
 	for _, o := range matchingOrders {
 		if o.RemainingParts != nil {
@@ -188,7 +257,29 @@ func canExecuteAll(order types.Order) bool {
 		}
 	}
 
-	return totalAvailable >= *order.RemainingParts
+	return totalAvailable
+}
+
+func CanExecuteAll(order types.Order) bool {
+	return getExecutableParts(order) >= *order.RemainingParts
+}
+
+func CanExecuteAny(order types.Order) bool {
+	return order.OrderType != "stop-limit" && order.OrderType != "stop" && getExecutableParts(order) > 0
+}
+
+func canPreExecute(order types.Order) bool {
+    if strings.ToUpper(order.OrderType) == "LIMIT" {
+        price := getListingPrice(order)
+        if price < 0 { return false }
+
+        if order.Direction == "sell" {
+            return price >= *order.LimitPricePerUnit
+        } else {
+            return price <= *order.LimitPricePerUnit
+        }
+    }
+    return true
 }
 
 func getBuyerID(a, b types.Order) uint {
