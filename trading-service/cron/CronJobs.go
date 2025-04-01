@@ -2,9 +2,9 @@ package cron
 
 import (
 	"banka1.com/db"
+	"banka1.com/orders"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 	"io"
@@ -41,10 +41,24 @@ func StartScheduler() {
 		createNewActuaries()
 	})
 	if err != nil {
-		fmt.Println("Greska pri pokretanju cron job-a:", err)
+		log.Errorf("Greska pri pokretanju cron job-a:", err)
 		return
 	}
+	// Provera i izvrsavanje STOP ordera na svakih 5 sekundi
+	_, err = c.AddFunc("@every 5s", func() {
+		orders.ExecuteStopOrders()
+	})
+	if err != nil {
+		log.Errorf("Greška pri zakazivanju ExecuteStopOrders:", err)
+	}
 
+	// Provera i izvrsavanje STOP-LIMIT ordera na svakih 5 sekundi
+	_, err = c.AddFunc("@every 5s", func() {
+		orders.ExecuteStopLimitOrders()
+	})
+	if err != nil {
+		log.Errorf("Greška pri zakazivanju ExecuteStopLimitOrders:", err)
+	}
 	c.Start()
 }
 
