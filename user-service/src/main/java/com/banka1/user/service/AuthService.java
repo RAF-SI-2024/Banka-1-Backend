@@ -8,7 +8,6 @@ import com.banka1.user.repository.EmployeeRepository;
 import com.banka1.user.utils.ResponseMessage;
 import com.banka1.common.model.Position;
 import com.banka1.common.service.implementation.GenericAuthService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,6 @@ public class AuthService extends GenericAuthService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
 
-    @Autowired
     public AuthService(CustomerRepository customerRepository, EmployeeRepository employeeRepository) {
         this.customerRepository = customerRepository;
         this.employeeRepository = employeeRepository;
@@ -36,11 +34,11 @@ public class AuthService extends GenericAuthService {
 
         Customer customer = customerRepository.findByEmail(email).orElse(null);
         if(customer != null && verifyPassword(password, customer.getPassword(), customer.getSaltPassword()))
-            return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false, false);
+            return generateToken(customer.getId(), Position.NONE, customer.getPermissions(), false, false, null);
 
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
         if(employee != null && verifyPassword(password, employee.getPassword(), employee.getSaltPassword()) && employee.getActive())
-            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), true, employee.getIsAdmin());
+            return generateToken(employee.getId(), employee.getPosition(), employee.getPermissions(), true, employee.getIsAdmin(), employee.getDepartment());
 
         throw new IllegalArgumentException(ResponseMessage.FAILED_LOGIN.toString());
     }

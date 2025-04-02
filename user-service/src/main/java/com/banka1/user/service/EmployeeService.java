@@ -1,12 +1,12 @@
 package com.banka1.user.service;
 
+import com.banka1.common.model.Department;
 import com.banka1.user.DTO.request.*;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
 import com.banka1.common.model.Position;
-import com.banka1.user.model.helper.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +16,11 @@ import org.springframework.data.domain.*;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatchers.contains;
@@ -31,10 +30,10 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 public class EmployeeService {
     private final SetPasswordService setPasswordService;
     private final EmployeeRepository employeeRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final JmsTemplate jmsTemplate;
     private final ModelMapper modelMapper;
     private final MessageHelper messageHelper;
+    private final Random random = new Random();
 
     @Value("${destination.email}")
     private String destinationEmail;
@@ -42,11 +41,22 @@ public class EmployeeService {
     private String frontendUrl;
 
     public EmployeeResponse findById(String id) {
-        var employeeOptional = employeeRepository.findById(Long.parseLong(id));
+        return findById(Long.parseLong(id));
+    }
+
+    public EmployeeResponse findById(long id) {
+        var employeeOptional = employeeRepository.findById(id);
         if (employeeOptional.isEmpty())
             return null;
         var employee = employeeOptional.get();
         return getEmployeeResponse(employee);
+    }
+
+    public EmployeeResponse findInLegal() {
+        var employees = employeeRepository.findByDepartment(Department.LEGAL);
+        if (employees.isEmpty())
+            return null;
+        return getEmployeeResponse(employees.get(random.nextInt(employees.size())));
     }
 
 
@@ -83,19 +93,6 @@ public class EmployeeService {
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
 
         return employee;
-    }
-
-    public void setPassword(SetPasswordRequest setPasswordRequest) {
-        Employee employee = employeeRepository.findByVerificationCode(setPasswordRequest.getToken())
-                .orElseThrow(() -> new RuntimeException("Korisnik nije pronađen"));
-
-        var salt = generateSalt();
-        var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
-        employee.setPassword(hashed);
-        employee.setSaltPassword(salt);
-        employee.setVerificationCode(null);
-
-        employeeRepository.save(employee);
     }
 
     public Employee updateEmployee(Long id, UpdateEmployeeRequest updateEmployeeRequest) {
@@ -138,11 +135,6 @@ public class EmployeeService {
         if (employee.getEmail().equals(currentUserEmail)) {
             throw new AccessDeniedException("Ne možete obrisati sami sebe");
         }
-
-//        // Samo admin može brisati admina
-//        if (employee.getPermissions().contains("admin") && !currentUserHasAdminPermission()) {
-//            throw new AccessDeniedException("Samo admin može brisati drugog admina");
-//        }
 
         employeeRepository.delete(employee);
     }
@@ -214,9 +206,11 @@ public class EmployeeService {
         );
     }
 
-    private String generateSalt() {
-        byte[] saltBytes = new byte[16];
-        new SecureRandom().nextBytes(saltBytes);
-        return Base64.getEncoder().encodeToString(saltBytes);
+    public List<EmployeeResponse> getAllActuaries(){
+        return employeeRepository.getActuaries()
+                        .stream()
+                        .map(EmployeeService::getEmployeeResponse)
+                        .toList();
+
     }
 }

@@ -16,6 +16,7 @@ import com.banka1.common.model.Permission;
 import com.banka1.user.repository.CustomerRepository;
 import com.banka1.user.service.CustomerService;
 import com.banka1.user.service.SetPasswordService;
+import org.hibernate.annotations.Any;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -76,7 +77,7 @@ public class CustomerServiceTest {
         customerDTO.setAddress("Ulica");
         customerDTO.setEmail("ppetrovic@example.com");
         customerDTO.setGender(Gender.MALE);
-        customerDTO.setBirthDate(90012002L);
+        customerDTO.setBirthDate("2000-03-03");
         customerDTO.setPhoneNumber("555333");
         customerDTO.setAccountInfo(createAccountDTO);
 
@@ -138,11 +139,8 @@ public class CustomerServiceTest {
     void testDeleteCustomerNotFound() {
         when(customerRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ResponseStatusException.class, () -> {
-            customerService.deleteCustomer(1L);
-        });
-
- //       assertEquals("Korisnik nije pronađen", exception.getMessage());
+        assertFalse(customerService.deleteCustomer(1L));
+        verify(customerRepository, times(0)).delete(any(Customer.class));
     }
 
     @Test
@@ -198,7 +196,7 @@ public class CustomerServiceTest {
         entity.setFirstName("Petar");
         entity.setLastName("Petrovic");
         entity.setUsername("ppetrovic");
-        entity.setBirthDate(1234567890L);
+        entity.setBirthDate("2000-03-03");
         entity.setGender(Gender.MALE);
         entity.setEmail("ppetrovic@banka.rs");
         entity.setPhoneNumber("99999999");
@@ -214,7 +212,7 @@ public class CustomerServiceTest {
                 "Petar",
                 "Petrovic",
                 "ppetrovic",
-                1234567890L,
+                "2000-03-03",
                 Gender.MALE,
                 "ppetrovic@banka.rs",
                 "99999999",

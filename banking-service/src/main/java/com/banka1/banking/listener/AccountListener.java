@@ -1,7 +1,6 @@
 package com.banka1.banking.listener;
 
 import com.banka1.banking.dto.CreateAccountByEmployeeDTO;
-import com.banka1.banking.dto.request.CreateAccountDTO;
 import com.banka1.banking.services.AccountService;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;

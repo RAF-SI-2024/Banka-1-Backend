@@ -19,12 +19,12 @@ public class Receiver {
     @Column(nullable = false)
     private String accountNumber;
 
-    @Column(nullable = true)
+    @Column()
     private String firstName;
 
-    @Column(nullable = true)
+    @Column()
     private String lastName;
 
-    @Column(nullable = true)
+    @Column()
     private String address;
 }

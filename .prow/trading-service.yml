@@ -1,0 +1,71 @@
+# Obratiti pažnju na komentare "PROMENITI PRI KOPIRANJU" i promeniti
+# to što se traži.
+# "presubmits" su CI jobovi, odnosno jobovi koji su pokreću za svaki
+# Pull Request i za svaki novi commit u okviru Pull Request-a.
+presubmits:
+  # PROMENITI PRI KOPIRANJU
+  # Name treba da bude u formatu "pull-<naziv-repozitorijuma>-<naziv-servisa>-test", npr.
+  # pull-banka-1-backend-trading-service-test ili pull-banka-2-backend-berza-service-test
+  - name: pull-banka-1-backend-trading-service-test
+    # always_run znači da će se job pokrenuti za svaki commit,
+    # nezavisno od toga šta taj commit menja.
+    # Bolja alternativa je da se job za dati servis pokrene samo
+    # ako se taj isti servis promeni, ili se promeni neki od root
+    # fajlova (npr. Docker Compose, root pom.xml, definicije job-ova)
+    # za šta se koristi run_if_changed.
+    # always_run: true
+    # PROMENITI PRI KOPIRANJU
+    # Ovde treba da zamenite "trading-service" sa nazivom direktorijuma
+    # servisa koji testirate.
+    # Regex string koji označava koji fajlovi treba da budu promenjeni
+    # kako bi se ovaj job pokrenuo. "|" funkcioniše kao "OR" operator,
+    # drugim rečima ovaj job će da se pokreni ako se promeni neki fajl u
+    # "trading-service" ili ".prow" direktorijumima, ili se promeni neki
+    # od "pom.xml" ili "docker-compose.yml" fajlova.
+    # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
+    # npr. "trading-service/".
+    run_if_changed: "(trading-service/|compose.yaml|.prow/)"
+    decorate: true
+    spec:
+      containers:
+        # "image" koji se koristi ovde je specijalan tip image-a, tzv. "build image"
+        # koji ima sve alate potrebne za izvršavanje CI task-ova. Najbitniji alati
+        # uključuju Javu, Maven, Docker i Docker Compose (za pokretanje dependency-a),
+        # npm i Google Chrome (za frontend).
+        # PROMENITI PRI KOPIRANJU
+        # Možete da birate izmenđu dva build image u zavisnosti od Java verzije koju
+        # koristite:
+        #   - harbor.k8s.elab.rs/base-images/base:java-21-node-18-docker (Java 21)
+        #   - harbor.k8s.elab.rs/base-images/base:java-17-node-18-docker (Java 17)
+        - image: harbor.k8s.elab.rs/base-images/base:go-1.24-docker
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+
+              # Pokreće Docker unutar kontejnera u kome se izvršava ova skripta
+              # i u kom se pokreću testovi.
+              # Docker vam omogućava da koristite Docker Compose i na taj način
+              # pokrenete sve potrebe dependency-e (npr. baze podataka i vaše druge
+              # mikroservise).
+              start-docker.sh
+
+              # PROMENITI PRI KOPIRANJU
+              # Ovde treba da pokrenete sve mikroservise i dependency-e koji vam trebaju
+              # za integracione i end to end testove (npr. baze podataka i vaše druge
+              # mikroservise).
+              # Naredna komanda pokreće servis definisan u "docker-compose.yml" fajlu
+              # pod nazivom "postgres-user" (PostgreSQL baza podataka koja se koristi za 
+              # trading-service u okviru ovog projekta).
+              # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
+              # testove. Moguće je više puta pokrenuti "docker compose up" za različite
+              # Docker Compose servise.
+              # docker compose up -d trading-db message-broker user-service banking-service
+      
+              SERVICE_NAME="trading-service"
+              cd trading-service
+              go test
+          securityContext:
+            privileged: true
+          imagePullPolicy: Always

@@ -23,6 +23,15 @@ public class Transaction {
     @Column(nullable = false)
     private Double amount;
 
+    @Column(nullable = false)
+    private Double finalAmount;
+
+    @Column(nullable = false)
+    private Double fee;
+
+    @Column(nullable = false)
+    private Boolean bankOnly = false;
+
     @ManyToOne
     @JoinColumn(name = "currency_id", nullable = false)
     private Currency currency;
@@ -30,12 +39,10 @@ public class Transaction {
     @Column(nullable = false)
     private Long timestamp;
 
-    @Column(nullable = true)
+    @Column()
     private String description;
 
     @ManyToOne
     @JoinColumn(name = "transfer_id", nullable = false)
     private Transfer transfer;
-
-    private Long loanId; // ukoliko je uplata za kredit, mora biti postavljen id kredita
 }

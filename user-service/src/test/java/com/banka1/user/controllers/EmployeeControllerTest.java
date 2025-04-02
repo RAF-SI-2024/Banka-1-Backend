@@ -7,7 +7,7 @@ import com.banka1.user.DTO.request.UpdateEmployeeRequest;
 import com.banka1.user.DTO.request.UpdatePermissionsRequest;
 import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.model.Employee;
-import com.banka1.user.model.helper.Department;
+import com.banka1.common.model.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,11 +24,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -183,5 +183,34 @@ class EmployeeControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
 
         Mockito.verify(employeeService).findById(id);
+    }
+
+    @Test
+    void fetchActuaries() throws Exception {
+        Employee actuary1 = new Employee();
+        actuary1.setId(1L);
+        actuary1.setFirstName("John");
+        actuary1.setLastName("Doe");
+
+        Employee actuary2 = new Employee();
+        actuary2.setId(2L);
+        actuary2.setFirstName("Jane");
+        actuary2.setLastName("Smith");
+
+        List<Employee> actuaryList = Arrays.asList(actuary1, actuary2);
+
+        doReturn(actuaryList).when(employeeService).getAllActuaries();
+
+        mockMvc.perform(get("/api/users/employees/actuaries"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].firstName").value("John"))
+                .andExpect(jsonPath("$.data[0].lastName").value("Doe"))
+                .andExpect(jsonPath("$.data[1].id").value(2))
+                .andExpect(jsonPath("$.data[1].firstName").value("Jane"))
+                .andExpect(jsonPath("$.data[1].lastName").value("Smith"));
+
+        Mockito.verify(employeeService).getAllActuaries();
     }
 }

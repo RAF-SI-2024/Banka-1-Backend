@@ -1,5 +1,4 @@
 package com.banka1.banking.services;
-import com.banka1.banking.services.TransferService;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.Transfer;
@@ -72,7 +71,7 @@ class InternalTransferServiceTest {
         assertEquals(TransferStatus.COMPLETED, transfer.getStatus());
 
         verify(accountRepository, times(2)).save(any(Account.class));
-        verify(transactionRepository, times(2)).save(any(Transaction.class));
+        verify(transactionRepository, times(1)).save(any(Transaction.class));
         verify(transferRepository, times(1)).save(transfer);
     }
 
@@ -81,9 +80,7 @@ class InternalTransferServiceTest {
         transfer.setAmount(1500.0); // Više nego što ima na računu
         when(transferRepository.findById(1L)).thenReturn(Optional.of(transfer));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            transferService.processInternalTransfer(1L);
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> transferService.processInternalTransfer(1L));
 
         assertEquals("Insufficient funds", exception.getMessage());
         assertEquals(TransferStatus.FAILED, transfer.getStatus());
@@ -98,9 +95,7 @@ class InternalTransferServiceTest {
         transfer.setStatus(TransferStatus.COMPLETED);
         when(transferRepository.findById(1L)).thenReturn(Optional.of(transfer));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            transferService.processInternalTransfer(1L);
-        });
+        Exception exception = assertThrows(RuntimeException.class, () -> transferService.processInternalTransfer(1L));
 
         assertEquals("Transfer is not in pending state", exception.getMessage());
 

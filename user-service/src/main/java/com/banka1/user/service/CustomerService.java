@@ -6,7 +6,6 @@ import com.banka1.common.model.Permission;
 import com.banka1.user.DTO.banking.CreateAccountDTO;
 import com.banka1.user.DTO.request.CreateCustomerRequest;
 import com.banka1.user.DTO.request.NotificationRequest;
-import com.banka1.user.DTO.request.SetPasswordRequest;
 import com.banka1.user.DTO.request.UpdateCustomerRequest;
 import com.banka1.user.DTO.response.CustomerPageResponse;
 import com.banka1.user.DTO.response.CustomerResponse;
@@ -15,11 +14,6 @@ import com.banka1.user.mapper.CustomerMapper;
 import com.banka1.user.model.Customer;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.user.repository.CustomerRepository;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +35,6 @@ import static org.springframework.data.domain.ExampleMatcher.GenericPropertyMatc
 @RequiredArgsConstructor
 public class CustomerService {
     private final CustomerRepository customerRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final SetPasswordService setPasswordService;
     private final JmsTemplate jmsTemplate;
     private final MessageHelper messageHelper;
@@ -68,6 +57,15 @@ public class CustomerService {
         var customer = customerOptional.get();
         return CustomerMapper.customerToDto(customer);
     }
+
+    public CustomerResponse findByEmail(String email) {
+        var customerOptional = customerRepository.findByEmail(email);
+        if(customerOptional.isEmpty())
+            return null;
+        var customer = customerOptional.get();
+        return CustomerMapper.customerToDto(customer);
+    }
+
 
     public CustomerPageResponse search(int page, int pageSize, Optional<String> sortField, Optional<String> sortOrder, Optional<String> filterField, Optional<String> filterValueOptional) {
         var direction = Sort.Direction.ASC;
@@ -92,7 +90,7 @@ public class CustomerService {
                 case "id" -> customer.setId(Long.valueOf(filterValue));
                 case "firstName" -> customer.setFirstName(filterValue);
                 case "lastName" -> customer.setLastName(filterValue);
-                case "birthDate" -> customer.setBirthDate(Long.valueOf(filterValue));
+                case "birthDate" -> customer.setBirthDate(filterValue);
                 case "gender" -> customer.setGender(Gender.valueOf(filterValue.toUpperCase()));
                 case "email" -> customer.setEmail(filterValue);
                 case "phoneNumber" -> customer.setPhoneNumber(filterValue);
@@ -115,12 +113,6 @@ public class CustomerService {
      * @param customerDTO The customer data transfer object.
      * @return The created customer entity.
      */
-    @Operation(summary = "Create a customer", description = "Creates a new customer with hashed password and stores it in the database.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer successfully created",
-                    content = @Content(schema = @Schema(implementation = Customer.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
     public Customer createCustomer(CreateCustomerRequest customerDTO, Long employeeId) {
         Customer customer = CustomerMapper.dtoToCustomer(customerDTO);
 
@@ -154,11 +146,6 @@ public class CustomerService {
      * @param customerDTO The updated customer data.
      * @return The updated customer, if found.
      */
-    @Operation(summary = "Update a customer", description = "Updates an existing customer’s details based on the given ID.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
-    })
     public Optional<Customer> updateCustomer(Long id, UpdateCustomerRequest customerDTO) {
         return customerRepository.findById(id).map(customer -> {
             if (customerDTO.getFirstName() != null) {
@@ -192,34 +179,19 @@ public class CustomerService {
         });
     }
 
-    public void setPassword(SetPasswordRequest setPasswordRequest) {
-        var customerOptional = customerRepository.findByVerificationCode(setPasswordRequest.getToken());
-        if (customerOptional.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen.");
-        var customer = customerOptional.get();
-        var salt = generateSalt();
-        var hashed = passwordEncoder.encode(setPasswordRequest.getPassword() + salt);
-        customer.setPassword(hashed);
-        customer.setSaltPassword(salt);
-        customer.setVerificationCode(null);
-        customerRepository.save(customer);
-    }
-
     /**
      * Deletes a customer by ID.
      * @param id The customer ID.
      * @return True if the customer was deleted, otherwise throws an exception.
      */
-    @Operation(summary = "Delete a customer", description = "Deletes a customer from the database based on ID.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Customer successfully deleted"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
-    })
     public boolean deleteCustomer(Long id) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen"));
+        Optional<Customer> customer = customerRepository.findById(id);
 
-        customerRepository.delete(customer);
+        if(customer.isEmpty()) {
+            return false;
+        }
+
+        customerRepository.delete(customer.get());
         return true;
     }
 
@@ -229,12 +201,6 @@ public class CustomerService {
      * @param permissions The list of permissions to assign.
      * @return The updated customer with new permissions.
      */
-    @Operation(summary = "Update customer permissions", description = "Updates the permissions for a specific customer.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Permissions updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - empty permissions list"),
-            @ApiResponse(responseCode = "404", description = "Customer not found")
-    })
     public Optional<Customer> updateCustomerPermissions(Long id, List<Permission> permissions) {
         if (permissions == null || permissions.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lista permisija ne može biti prazna ili null");
@@ -244,11 +210,5 @@ public class CustomerService {
             customer.setPermissions(permissions);
             return customerRepository.save(customer);
         });
-    }
-
-    private String generateSalt() {
-        byte[] saltBytes = new byte[16];
-        new SecureRandom().nextBytes(saltBytes);
-        return Base64.getEncoder().encodeToString(saltBytes);
     }
 }

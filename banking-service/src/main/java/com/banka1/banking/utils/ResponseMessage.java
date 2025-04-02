@@ -14,7 +14,7 @@ public enum ResponseMessage {
     ACCOUNT_NOT_FOUND("Racun ne postoji"),
     TRANSACTIONS_NOT_FOUND("Nema transakcija za izabrani racun"),
     UPDATED("Uspesno izmenjen sadrzaj"),
-    USER_NOT_FOUND("Prvo registruj korisnika"),
+    USER_NOT_FOUND("Korisnik nije pronađen"),
     NOT_THE_OWNER("Korisnik nije vlasnik"),
     CARD_NOT_FOUND("Nema kartica za traženi račun."),
     CARD_CREATED_SUCCESS("Kartica uspešno kreirana."),
@@ -22,7 +22,8 @@ public enum ResponseMessage {
     INVALID_REQUEST("Nevalidni podaci."),
     WRONG_NUM_OF_INSTALLMENTS("Netacan broj rata"),
     NO_DATA("Nema podataka u sistemu"),
-    LOAN_NOT_FOUND("Ovaj kredit ne postoji");
+    LOAN_NOT_FOUND("Ovaj kredit ne postoji"),
+    COMPANY_CREATED("Uspesno kreirana kompanija");
 
     private final String message;
 

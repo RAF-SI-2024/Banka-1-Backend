@@ -1,11 +1,8 @@
 package com.banka1.banking.services;
-
 import com.banka1.banking.models.OtpToken;
 import com.banka1.banking.repository.OtpTokenRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 

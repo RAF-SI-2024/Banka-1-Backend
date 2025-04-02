@@ -26,19 +26,19 @@ public class Transfer {
     @Column(nullable = false)
     private Double amount;
 
-    @Column(nullable = true)
+    @Column()
     private String receiver;
 
-    @Column(nullable = true)
+    @Column()
     private String adress;
 
-    @Column(nullable = true)
+    @Column()
     private String paymentCode; // sifra placanja
 
-    @Column(nullable = true)
+    @Column()
     private String paymentReference; // poziv na broj
 
-    @Column(nullable = true)
+    @Column()
     private String paymentDescription; // svrha placanja
 
     @ManyToOne
@@ -49,23 +49,23 @@ public class Transfer {
     @JoinColumn(name = "to_currency_id", nullable = false)
     private Currency toCurrency;
 
-    @Column(nullable = true)
+    @Column()
     private Long createdAt;
 
-    @Column(nullable = true)
+    @Column()
     private String otp;
 
-    @Column(nullable = true)
+    @Column()
     @Enumerated(EnumType.STRING)
     private TransferType type;
 
-    @Column(nullable = true)
+    @Column()
     @Enumerated(EnumType.STRING)
     private TransferStatus status;
 
-    @Column(nullable = true)
+    @Column()
     private Long completedAt;
 
-    @Column(nullable = true)
+    @Column()
     private String note;
 }

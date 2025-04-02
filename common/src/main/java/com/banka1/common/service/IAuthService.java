@@ -1,5 +1,6 @@
 package com.banka1.common.service;
 
+import com.banka1.common.model.Department;
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
 import io.jsonwebtoken.Claims;
@@ -36,5 +37,5 @@ public interface IAuthService {
     String recreateToken(String token);
 
     // Kreira jwt sa korisnickim ID-em, rolom i permisijama.
-    String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin);
+    String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin, Department department);
 }

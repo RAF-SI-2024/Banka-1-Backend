@@ -24,7 +24,7 @@ public class Customer {
     private String lastName;
 
     @Column(nullable = false)
-    private Long birthDate;
+    private String birthDate; // Format: "YYYY-MM-DD"
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -42,10 +42,10 @@ public class Customer {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = true)
+    @Column
     private String password;
 
-    @Column(nullable = true)
+    @Column
     private String saltPassword;
 
     private String verificationCode;

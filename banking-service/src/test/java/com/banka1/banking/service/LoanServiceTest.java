@@ -7,8 +7,10 @@ import com.banka1.banking.models.Loan;
 
 import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.models.helper.AccountType;
+import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.InterestType;
 import com.banka1.banking.models.helper.LoanType;
+import com.banka1.banking.models.helper.PaymentStatus;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.repository.LoanRepository;
 import com.banka1.banking.services.LoanService;
@@ -25,7 +27,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class LoanServiceTest {
@@ -45,41 +46,33 @@ public class LoanServiceTest {
     void setUp() {
         createLoanDTO = new CreateLoanDTO();
         createLoanDTO.setAccountId(1L);
-        createLoanDTO.setMonthlyPayment(10.0);
-        createLoanDTO.setDuration(12);
         createLoanDTO.setLoanAmount(20000.0);
-        createLoanDTO.setEffectiveRate(0.4);
-        createLoanDTO.setNominalRate(0.21);
         createLoanDTO.setInterestType(InterestType.FIXED);
         createLoanDTO.setNumberOfInstallments(12);
         createLoanDTO.setLoanType(LoanType.CASH);
     }
     @Test
     void testCreateLoanSuccessfully() {
-
-        Loan loan = new Loan();
-        loan.setNumberOfInstallments(12);
-        loan.setLoanType(LoanType.CASH);
-        loan.setNumberOfInstallments(12);
-
-
         Account account = new Account();
         account.setId(1L);
         account.setType(AccountType.CURRENT);
         account.setSubtype(AccountSubtype.PERSONAL);
 
-        loan.setAccount(account);
-
-        when(modelMapper.map(createLoanDTO, Loan.class)).thenReturn(loan);
-
         when(accountRepository.findById(createLoanDTO.getAccountId())).thenReturn(Optional.of(account));
 
-        when(loanRepository.save(loan)).thenReturn(loan);
+        when(loanRepository.save(any(Loan.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Loan result = loanService.createLoan(createLoanDTO);
 
         assertNotNull(result);
-        verify(loanRepository, times(1)).save(loan);
+        assertEquals(createLoanDTO.getLoanType(), result.getLoanType());
+        assertEquals(createLoanDTO.getNumberOfInstallments(), result.getNumberOfInstallments());
+        assertEquals(createLoanDTO.getInterestType(), result.getInterestType());
+        assertEquals(createLoanDTO.getLoanAmount(), result.getLoanAmount());
+        assertEquals(PaymentStatus.PENDING, result.getPaymentStatus());
+        assertEquals(account, result.getAccount());
+
+        verify(loanRepository, times(1)).save(any(Loan.class));
     }
 
     @Test

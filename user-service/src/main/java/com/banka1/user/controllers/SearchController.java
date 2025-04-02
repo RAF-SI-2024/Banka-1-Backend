@@ -8,13 +8,15 @@ import com.banka1.user.service.EmployeeService;
 import com.banka1.user.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -30,6 +32,46 @@ public class SearchController {
             summary = "Pretraga svih zaposlenih",
             description = "Vraca sve zaposlene koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Uspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                   "success": true,
+                   "data": {
+                     "total": 1,
+                     "rows": [
+                       {
+                         "id": 5,
+                         "firstName": "Pera",
+                         "lastName": "Petrovic",
+                         "username": "pera123",
+                         "birthDate": "2000-10-10",
+                         "gender": "MALE",
+                         "email": "pera@banka.com",
+                         "phoneNumber": "+381601001001",
+                         "address": "Knez Mihailova 6",
+                         "position": "WORKER",
+                         "department": "AGENT",
+                         "active": true,
+                         "isAdmin": false,
+                         "permissions": [
+                           "user.customer.view"
+                         ]
+                       }
+                     ]
+                   }
+                 }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neuspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Specificirano polje za filtriranje ali nije specificirana vrednost."
+                }
+            """))
+        )
+    })
     @GetMapping("employees")
     @Authorization(permissions = {Permission.LIST_EMPLOYEE})
     public ResponseEntity<?> searchEmployees(
@@ -69,9 +111,9 @@ public class SearchController {
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
-            return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, employees, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 
@@ -79,6 +121,42 @@ public class SearchController {
             summary = "Pretraga svih musterija",
             description = "Vraca sve musterije koji zadovoljavaju (opcioni) filter, sortirani po zadatom polju. Rezultati se vracaju podeljeni na stranice."
     )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Uspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                    "success": true,
+                    "data": {
+                      "total": 1,
+                      "rows": [
+                        {
+                          "id": 1,
+                          "firstName": "Pera",
+                          "lastName": "Petrovic",
+                          "username": "pera123",
+                          "birthDate": "2005-12-12",
+                          "gender": "MALE",
+                          "email": "pera@banka.com",
+                          "phoneNumber": "+381641001002",
+                          "address": "Knez Mihailova 6",
+                          "permissions": [
+                            "user.employee.view"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+            """))
+        ),
+        @ApiResponse(responseCode = "400", description = "Neuspešna pretraga", content = @Content(mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "success": false,
+                  "error": "Specificirano polje za filtriranje ali nije specificirana vrednost."
+                }
+            """))
+        )
+    })
     @GetMapping("customers")
     @Authorization(permissions = { Permission.LIST_CUSTOMER })
     public ResponseEntity<?> searchCustomers(
@@ -118,9 +196,9 @@ public class SearchController {
                     page.orElse(0), pageSize.orElse(10),
                     sortField, sortOrder, filterField, filterValue
             );
-            return ResponseTemplate.create(ResponseEntity.ok(), true, employees, null);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, employees, null);
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

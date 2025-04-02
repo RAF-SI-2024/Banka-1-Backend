@@ -1,0 +1,25 @@
+def imageName = project.hasProperty('imageName') ? project.getProperty('imageName') : 'trading-service'
+def imageTag = project.hasProperty('imageTag') ? project.getProperty('imageTag') : '0.0.1-SNAPSHOT'
+
+tasks.register('bootBuildImage') {
+    description = 'Builds a Docker image for the Go application'
+    group = 'build'
+
+    doLast {
+        def errorOutput = new ByteArrayOutputStream()
+        def result = exec {
+            workingDir = projectDir
+            commandLine 'docker', 'build', '-t', "${imageName}:${imageTag}", '.'
+            standardOutput = new ByteArrayOutputStream()
+            errorOutput
+            ignoreExitValue = true
+        }
+
+        if (result.exitValue == 0) {
+            println "Successfully built Docker image: ${imageName}:${imageTag}"
+        } else {
+            println "Docker build failed: ${errorOutput.toString()}"
+            throw new GradleException("Docker build failed")
+        }
+    }
+}

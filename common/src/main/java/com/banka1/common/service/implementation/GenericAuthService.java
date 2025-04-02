@@ -1,5 +1,6 @@
 package com.banka1.common.service.implementation;
 
+import com.banka1.common.model.Department;
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
 import com.banka1.common.service.IAuthService;
@@ -32,13 +33,14 @@ public abstract class GenericAuthService implements IAuthService {
     }
 
     // Generiše token bez zahtevanja enum tipova
-    private String generateTokenRaw(Long userId, String position, List<String> permissions, Boolean isEmployed, Boolean isAdmin) {
+    private String generateTokenRaw(Long userId, String position, List<String> permissions, Boolean isEmployed, Boolean isAdmin, Department department) {
         return Jwts.builder()
                 .claim("id", userId)
                 .claim("position", position)
                 .claim("permissions", permissions)
                 .claim("isEmployed", isEmployed)
                 .claim("isAdmin", isAdmin)
+                .claim("department", department)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
@@ -74,14 +76,15 @@ public abstract class GenericAuthService implements IAuthService {
                                     claims.get("position", String.class),
                                     (List<String>) claims.get("permissions"),
                                     claims.get("isEmployed", Boolean.class),
-                                    claims.get("isAdmin", Boolean.class));
+                                    claims.get("isAdmin", Boolean.class),
+                                    claims.get("department", Department.class));
         } catch (Exception e) {
             return null;
         }
     }
 
     @Override
-    public String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin) {
-        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()), isEmployed, isAdmin);
+    public String generateToken(Long userId, Position position, List<Permission> permissions, Boolean isEmployed, Boolean isAdmin, Department department) {
+        return generateTokenRaw(userId, position.toString(), permissions.stream().map(Permission::toString).collect(Collectors.toList()), isEmployed, isAdmin, department);
     }
 }

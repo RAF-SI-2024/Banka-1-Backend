@@ -18,7 +18,7 @@ public class CustomerDTO {
     private String lastName;
 
     @NonNull
-    private Long birthDate;
+    private String birthDate;
 
     @NonNull
     private String email;

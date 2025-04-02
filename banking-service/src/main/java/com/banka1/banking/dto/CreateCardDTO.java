@@ -12,4 +12,5 @@ public class CreateCardDTO {
     private CardType cardType;
     private CardBrand cardBrand;
     private AuthorizedPersonDTO authorizedPerson;
+    private CreateCompanyDTO company;
 }

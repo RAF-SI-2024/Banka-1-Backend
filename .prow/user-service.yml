@@ -1,0 +1,113 @@
+# Obratiti pažnju na komentare "PROMENITI PRI KOPIRANJU" i promeniti
+# to što se traži.
+# "presubmits" su CI jobovi, odnosno jobovi koji su pokreću za svaki
+# Pull Request i za svaki novi commit u okviru Pull Request-a.
+presubmits:
+  # PROMENITI PRI KOPIRANJU
+  # Name treba da bude u formatu "pull-<naziv-repozitorijuma>-<naziv-servisa>-test", npr.
+  # pull-banka-1-backend-user-service-test ili pull-banka-2-backend-berza-service-test
+  - name: pull-banka-1-backend-user-service-test
+    # always_run znači da će se job pokrenuti za svaki commit,
+    # nezavisno od toga šta taj commit menja.
+    # Bolja alternativa je da se job za dati servis pokrene samo
+    # ako se taj isti servis promeni, ili se promeni neki od root
+    # fajlova (npr. Docker Compose, root pom.xml, definicije job-ova)
+    # za šta se koristi run_if_changed.
+    # always_run: true
+    # PROMENITI PRI KOPIRANJU
+    # Ovde treba da zamenite "user-service" sa nazivom direktorijuma
+    # servisa koji testirate.
+    # Regex string koji označava koji fajlovi treba da budu promenjeni
+    # kako bi se ovaj job pokrenuo. "|" funkcioniše kao "OR" operator,
+    # drugim rečima ovaj job će da se pokreni ako se promeni neki fajl u
+    # "user-service" ili ".prow" direktorijumima, ili se promeni neki
+    # od "pom.xml" ili "docker-compose.yml" fajlova.
+    # Direktorijumi su naznačeni sa "/" na kraju naziva direktorijuma,
+    # npr. "user-service/".
+    run_if_changed: "(user-service/|compose.yaml|build.gradle.kts|settings.gradle.kts|.prow/)"
+    decorate: true
+    spec:
+      containers:
+        # "image" koji se koristi ovde je specijalan tip image-a, tzv. "build image"
+        # koji ima sve alate potrebne za izvršavanje CI task-ova. Najbitniji alati
+        # uključuju Javu, Maven, Docker i Docker Compose (za pokretanje dependency-a),
+        # npm i Google Chrome (za frontend).
+        # PROMENITI PRI KOPIRANJU
+        # Možete da birate izmenđu dva build image u zavisnosti od Java verzije koju
+        # koristite:
+        #   - harbor.k8s.elab.rs/base-images/base:java-21-node-18-docker (Java 21)
+        #   - harbor.k8s.elab.rs/base-images/base:java-17-node-18-docker (Java 17)
+        - image: harbor.k8s.elab.rs/base-images/base:gradle-17-node-22-docker
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+
+              # Funkcija koja upload-uje JUnit report i JaCoCo coverage report nakon
+              # završetka job-a. Prow može da parsira JUnit report i pokaže koji su
+              # se sve testovi izvršili, koji testovi su prošli, a koji nisu.
+              # Prow takođe može da serve-uje JaCoCo coverage report u HTML formatu,
+              # pa uploadujemo i njega.
+              # Ne menjati redosled komandi u ovoj funkciji, bitno je da se JUnit report
+              # uploaduje pre JaCoCo coverage report-a zato što JaCoCo coverage report
+              # postoji samo ako se svi testovi završe uspešno, što nije slučaj za
+              # JUnit report-e.
+              
+              SERVICE_NAME="user-service"
+              
+              collectJUnitCoverage() {
+              set +e
+            
+              # For Gradle projects, JUnit reports are in build/test-results/test directory
+              junit_source_directory="./${SERVICE_NAME}/build/test-results/test/"
+              junit_dest_directory="/logs/artifacts/"
+            
+              counter=1
+            
+              for file in "$junit_source_directory"/*.xml; do
+              cp "$file" "$junit_dest_directory/junit.$counter.xml"
+              counter=$((counter+1))
+              done
+            
+              cp -r ./${SERVICE_NAME}/build/reports/jacoco /logs/artifacts/jacoco
+              echo "${GCSWEB_URL}/prow-logs/pr-logs/pull/${REPO_OWNER}_${REPO_NAME}/${PULL_NUMBER}/${JOB_NAME}/${BUILD_NUMBER}/artifacts/jacoco/index.html" > /logs/artifacts/coverage.link.txt
+              }
+
+              # Pokreće Docker unutar kontejnera u kome se izvršava ova skripta
+              # i u kom se pokreću testovi.
+              # Docker vam omogućava da koristite Docker Compose i na taj način
+              # pokrenete sve potrebe dependency-e (npr. baze podataka i vaše druge
+              # mikroservise).
+              start-docker.sh
+
+              # PROMENITI PRI KOPIRANJU
+              # Ovde treba da pokrenete sve mikroservise i dependency-e koji vam trebaju
+              # za integracione i end to end testove (npr. baze podataka i vaše druge
+              # mikroservise).
+              # Naredna komanda pokreće servis definisan u "docker-compose.yml" fajlu
+              # pod nazivom "postgres-user" (PostgreSQL baza podataka koja se koristi za 
+              # user-service u okviru ovog projekta).
+              # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
+              # testove. Moguće je više puta pokrenuti "docker compose up" za različite
+              # Docker Compose servise.
+              docker compose up -d user-db message-broker
+              
+              # trap komanda obezbeđuje da se "collectJUnitCoverage"
+              # funkcija izvrši pre samog izlaska iz ove skripte, nezavisno
+              # od toga da li su testovi prošli uspešno ili neuspšeno.
+              # Ovo je izuzetno važno kako bi uploadovoali JUnit report nezavisno
+              # od toga da li su testovi prošli ili ne, pošto čak i da nisu,
+              # JUnit pokazuje koji testovi su prošli, a koji nisu.
+              # Takođe je izuzetno važno da se ova trap komnda pokrene pre
+              # pokretanja testova.
+              trap collectJUnitCoverage EXIT
+
+              # Pokreće sledeće Maven target-e:
+              #   - "clean": čisti projekat, npr. ukoliko ste greškom commit-ovali target/ direktorijum
+              #   - "test": pokreće sve testove u okviru vaših projekata
+              #   - "verify": verifikuje rezultate integracionih testova
+              gradle ${SERVICE_NAME}:clean ${SERVICE_NAME}:test
+          securityContext:
+            privileged: true
+          imagePullPolicy: Always

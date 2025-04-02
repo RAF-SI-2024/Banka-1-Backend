@@ -51,8 +51,8 @@ class CurrencyServiceTest {
         );
 
         // Simulacija API poziva
-        when(restTemplate.getForObject(eq("https://api.exchangerate-api.com/v4/latest/RSD"), eq(String.class)))
-                .thenReturn("{\"rates\": {\"EUR\": 117.3, \"USD\": 108.5}}");
+        when(restTemplate.getForObject(eq("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/rsd.json"), eq(String.class)))
+                .thenReturn("{\"rsd\":{\"eur\":117.3,\"usd\":108.5}}");
 
         // Mock baze valuta
         Currency rsd = new Currency();
@@ -86,83 +86,32 @@ class CurrencyServiceTest {
     }
 
     @Test
-    @DisplayName("Test: getExchangeRatesForBaseCurrency() - Prikaz kursne liste u odnosu na RSD")
+    @DisplayName("Test: getExchangeRatesForBaseCurrency() - Prikaz kursne liste u odnosu na EUR")
     void testGetExchangeRatesForBaseCurrency_Success() {
         // Mock podataka iz baze
-        Currency rsd = new Currency();
-        rsd.setCode(CurrencyType.RSD);
-
         Currency eur = new Currency();
         eur.setCode(CurrencyType.EUR);
 
         Currency usd = new Currency();
         usd.setCode(CurrencyType.USD);
 
-        ExchangePair rsdToEur = new ExchangePair();
-        rsdToEur.setBaseCurrency(rsd);
-        rsdToEur.setTargetCurrency(eur);
-        rsdToEur.setExchangeRate(117.3);
-        rsdToEur.setDate(LocalDate.now());
+        ExchangePair eurToUsd = new ExchangePair();
+        eurToUsd.setBaseCurrency(eur);
+        eurToUsd.setTargetCurrency(usd);
+        eurToUsd.setExchangeRate(1.1);
+        eurToUsd.setDate(LocalDate.now());
 
-        ExchangePair rsdToUsd = new ExchangePair();
-        rsdToUsd.setBaseCurrency(rsd);
-        rsdToUsd.setTargetCurrency(usd);
-        rsdToUsd.setExchangeRate(108.5);
-        rsdToUsd.setDate(LocalDate.now());
-
-        when(exchangePairRepository.findByBaseCurrencyCode(CurrencyType.RSD))
-                .thenReturn(List.of(rsdToEur, rsdToUsd));
+        when(exchangePairRepository.findByBaseCurrencyCode(CurrencyType.EUR))
+                .thenReturn(List.of(eurToUsd));
 
         // Poziv metode
         List<ExchangePairDTO> result = currencyService.getExchangeRatesForBaseCurrency(CurrencyType.EUR);
 
         // Provera rezultata
-        assertEquals(1, result.size()); // Samo jedan par (EUR -> USD)
-        assertEquals("USD", result.get(0).getTargetCurrency());
-    }
-
-    @Test
-    @DisplayName("Test: getExchangeRatesForBaseCurrency() - Prikaz kursne liste u odnosu na EUR (izračunavanje indirektno)")
-    void testGetExchangeRatesForBaseCurrency_EUR() {
-        // Mock podaci iz baze
-        Currency rsd = new Currency();
-        rsd.setCode(CurrencyType.RSD);
-
-        Currency eur = new Currency();
-        eur.setCode(CurrencyType.EUR);
-
-        Currency usd = new Currency();
-        usd.setCode(CurrencyType.USD);
-
-        List<ExchangePair> mockRates = new ArrayList<>();
-
-        // Postavljen baseCurrency(rsd) posto ucitavam kursnu listu za rsd samo,
-        // pa preko formule izracunavam ostale ExchangePair
-        ExchangePair pair1 = new ExchangePair();
-        pair1.setBaseCurrency(rsd);
-        pair1.setTargetCurrency(eur);
-        pair1.setExchangeRate(117.3);
-        pair1.setDate(LocalDate.now());
-
-        ExchangePair pair2 = new ExchangePair();
-        pair2.setBaseCurrency(rsd);
-        pair2.setTargetCurrency(usd);
-        pair2.setExchangeRate(108.5);
-        pair2.setDate(LocalDate.now());
-
-        mockRates.add(pair1);
-        mockRates.add(pair2);
-
-        when(exchangePairRepository.findByBaseCurrencyCode(CurrencyType.RSD)).thenReturn(mockRates);
-
-        // Poziv testirane metode
-        List<ExchangePairDTO> result = currencyService.getExchangeRatesForBaseCurrency(CurrencyType.EUR);
-
-        // Provera da li je metod ispravno izračunao EUR → USD
         assertEquals(1, result.size());
-        assertEquals("EUR", result.get(0).getBaseCurrency());
         assertEquals("USD", result.get(0).getTargetCurrency());
-        assertEquals(108.5 / 117.3, result.get(0).getExchangeRate(), 0.01);
+        assertEquals("EUR", result.get(0).getBaseCurrency());
+        assertEquals(1.1, result.get(0).getExchangeRate());
     }
 
     @Test
@@ -218,8 +167,8 @@ class CurrencyServiceTest {
     @DisplayName("Test: fetchExchangeRates() - API vraća prazan odgovor")
     void testFetchExchangeRates_EmptyResponse() {
         // Simulacija praznog API odgovora
-        when(restTemplate.getForObject(eq("https://api.exchangerate-api.com/v4/latest/RSD"), eq(String.class)))
-                .thenReturn("{\"rates\": {}}");
+        when(restTemplate.getForObject(eq("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/rsd.json"), eq(String.class)))
+                .thenReturn("{\"rsd\":{}}");
 
         // Pokretanje metode
         currencyService.fetchExchangeRates();

@@ -50,12 +50,10 @@ public class AuthAspect {
 
     private String getAuthTokenFromRequest() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            String authHeader = request.getHeader("Authorization");
-            return authService.getToken(authHeader);
-        }
-        return null;
+        if(attributes==null) return null;
+        HttpServletRequest request = attributes.getRequest();
+        String authHeader = request.getHeader("Authorization");
+        return authService.getToken(authHeader);
     }
 
     @Around("@annotation(com.banka1.user.aspect.Authorization)")
@@ -86,13 +84,26 @@ public class AuthAspect {
         Authorization authorization = method.getAnnotation(Authorization.class);
 
         Set<String> necessaryPermissions = Arrays.stream(authorization.permissions()).map(Permission::toString).collect(Collectors.toSet());
-        Set<String> grantedPermissions = new HashSet<>((List<String>) claims.get("permissions"));
+
+        Object permissionsObject = claims.get("permissions");
+        Set<String> grantedPermissions;
+
+        if (permissionsObject instanceof List<?>) {
+            grantedPermissions = ((List<?>) permissionsObject)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .collect(Collectors.toSet());
+        } else {
+            grantedPermissions = Collections.emptySet();
+        }
+
         System.out.println(grantedPermissions);
 
         Set<String> possiblePositions = Arrays.stream(authorization.positions()).map(Position::toString).collect(Collectors.toSet());
 
         // Moguće je da korisnik ima i više permisija nego što je potrebno
-        if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.size() == 0 || possiblePositions.contains(claims.get("position", String.class)))) {
+        if(grantedPermissions.containsAll(necessaryPermissions) && (possiblePositions.isEmpty() || possiblePositions.contains(claims.get("position", String.class)))) {
             return joinPoint.proceed();
         }
 

@@ -1,9 +1,9 @@
 package com.banka1.banking.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.banka1.banking.models.helper.BusinessActivityCode;
+
+import jakarta.persistence.*;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,14 +12,20 @@ import lombok.Setter;
 @Setter
 public class Company {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column private Long id;
 
-    private String name;
+    @Column private String name;
 
-    private String address;
+    @Column private String address;
 
-    private String vatNumber;
+    @Column private String vatNumber;
 
-    private String companyNumber; // matični broj
+    @Column private String companyNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column private BusinessActivityCode bas;
+
+    @Column private Long ownerID;
+
 }

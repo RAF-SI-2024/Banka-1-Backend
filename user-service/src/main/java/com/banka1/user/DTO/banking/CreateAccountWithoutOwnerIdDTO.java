@@ -29,4 +29,6 @@ public class CreateAccountWithoutOwnerIdDTO {
 
     @NotNull(message = "Izaberi da li da se kreiraju kartice za racun")
     private Boolean createCard;
+
+    private Double balance;
 }

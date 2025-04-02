@@ -1,12 +1,10 @@
 package com.banka1.banking.dto;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Data
-@Getter
-@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class MoneyTransferDTO {
 
     private String fromAccountNumber;

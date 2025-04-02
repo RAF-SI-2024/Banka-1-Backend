@@ -79,7 +79,7 @@ class CustomerControllerTest {
                 "Petar",
                 "Petrovic",
                 "ppetrovic",
-                1234567890L,
+                "2000-03-03",
                 Gender.MALE,
                 "ppetrovic@banka.rs",
                 "99999999",
@@ -97,7 +97,7 @@ class CustomerControllerTest {
         mockMvc.perform(post("/api/customer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(customerDTO)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -182,7 +182,7 @@ class CustomerControllerTest {
                 "Petar",
                 "Petrovic",
                 "ppetrovic",
-                1234567890L,
+                "2000-03-03",
                 Gender.MALE,
                 "ppetrovic@banka.rs",
                 "99999999",

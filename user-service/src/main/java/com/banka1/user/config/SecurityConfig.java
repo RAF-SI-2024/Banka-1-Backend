@@ -3,6 +3,7 @@ package com.banka1.user.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -17,11 +18,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest()
                         .permitAll())
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> {
-                    cors.configurationSource(cors());
-                });
-        ;
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(cors()));
+
 
         return http.build();
     }
@@ -30,7 +29,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource cors() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

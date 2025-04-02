@@ -69,7 +69,7 @@ public class Account {
     private Double monthlyMaintenanceFee;
 
     @ManyToOne
-    @JoinColumn(name = "company_id", nullable = true)
+    @JoinColumn(name = "company_id")
     private Company company;
 
 }

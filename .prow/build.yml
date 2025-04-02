@@ -1,0 +1,85 @@
+# Obratiti pažnju na komentare "PROMENITI PRI KOPIRANJU" i promeniti
+# to što se traži.
+# "postsubmits" su CD jobovi, odnosno jobovi koji su pokreću za svaki
+# mergovan Pull Request, tj. za svaki push na bilo koju granu glavnog
+# repozitorijuma.
+postsubmits:
+  # Ovaj CD job će da builduje i pushuje image za sve mikroservise.
+  # PROMENITI PRI KOPIRANJU
+  # Name treba da bude u formatu "post-<naziv-repozitorijuma>--build", npr.
+  # post-banka-1-backend-build ili post-banka-2-backend-build
+  - name: post-banka-1-backend-build
+    # always_run znači da će se job pokrenuti za svaki commit,
+    # nezavisno od toga šta taj commit menja.
+    # Za razliku od CI jobova, gde imamo jedan job za svaki mikroservis,
+    # ovde imamo samo jedan CD job za ceo repozitorijum, tako da ćemo ovaj
+    # job uvek pokretati koristeći "always_run" opciju.
+    # Namerno izbegavamo da imamo različite jobove za svaki mikroservis, pošto
+    # je najbolje da imamo image sa tagom koji odgovara hash-u Git commit-a,
+    # a da bi to bilo efikasno, treba da pushujemo image sa tim tagom za svaki
+    # mikroservis.
+    branches:
+      - ^main$
+    always_run: true
+    decorate: true
+    # max_concurrency omogućava da u istom trenutku može biti pokrenuta samo
+    # jedna instanca ovog joba. Na ovaj način osiguravamo da nemamo konfliktne
+    # pushove na image registry.
+    max_concurrency: 1
+    # labels omogućava injectovanje kredencijala i drugih senzitivnih podataka.
+    # "preset-harbor-robot-push" je preset koji sadrži dve environment varijable,
+    # HARBOR_USERNAME i HARBOR_PASSWORD, sa kredencijalima za logovanje na našu
+    # Harbor instancu.
+    labels:
+      preset-harbor-robot-push: "true"
+    spec:
+      containers:
+        # "image" koji se koristi ovde je specijalan tip image-a, tzv. "build image"
+        # koji ima sve alate potrebne za izvršavanje CI task-ova. Najbitniji alati
+        # uključuju Javu, Maven, Docker i Docker Compose (za pokretanje dependency-a),
+        # npm i Google Chrome (za frontend).
+        # PROMENITI PRI KOPIRANJU
+        # Možete da birate izmenđu dva build image u zavisnosti od Java verzije koju
+        # koristite:
+        #   - harbor.k8s.elab.rs/base-images/base:java-21-node-18-docker (Java 21)
+        #   - harbor.k8s.elab.rs/base-images/base:java-17-node-18-docker (Java 17)
+        - image: harbor.k8s.elab.rs/base-images/base:gradle-17-node-22-docker
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+
+              # PROMENITI PRI KOPIRANJU
+              # Naziv vašeg tima, može biti "banka-1", "banka-2", "banka-3", ili "banka-4"
+              TEAM_NAME="banka-1"
+
+              # Pokreće Docker unutar kontejnera u kome se izvršava ova skripta.
+              # Docker vam omogućava da buildujete images.
+              start-docker.sh
+
+              # Logovanje na našu Harbor instancu na koju ćemo da pushujemo image.
+              docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD harbor.k8s.elab.rs
+
+              # Hash commit-a za koji se ovaj job pokrenuo. Ovaj hash koristimo da pushujemo
+              # image koji ima ovaj hash kao svoj tag.
+              commit_hash=$(git rev-parse HEAD)
+              
+              # PROMENITI PRI KOPIRANJU
+              # for petlja koja se pokreće za svaki mikroservis.
+              # Promeniti petlju tako sadrži sve mikroservise koje imate, npr:
+              #   for serviceName in user-service berza-service banka-service; do
+              gradle bootBuildImage
+              for serviceName in user-service banking-service notification-service trading-service; do
+                
+                # Pravi kopiju prethodno buildovanog image sa tagom zasnovanim na commit hash-u.
+                docker tag ${serviceName}:0.0.1-SNAPSHOT harbor.k8s.elab.rs/${TEAM_NAME}/${serviceName}:latest
+                docker tag harbor.k8s.elab.rs/${TEAM_NAME}/${serviceName}:latest harbor.k8s.elab.rs/${TEAM_NAME}/${serviceName}:${commit_hash}
+                
+                # Pushuje oba image na našu Harbor instancu.
+                docker push harbor.k8s.elab.rs/${TEAM_NAME}/${serviceName}:latest
+                docker push harbor.k8s.elab.rs/${TEAM_NAME}/${serviceName}:${commit_hash}
+              done
+          securityContext:
+            privileged: true
+          imagePullPolicy: Always

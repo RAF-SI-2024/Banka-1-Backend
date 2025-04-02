@@ -223,33 +223,35 @@ public class CardServiceTest {
     public void testUpdateCardBlockCard() {
         int cardId = 1;
         UpdateCardDTO updateCardDTO = new UpdateCardDTO();
-        updateCardDTO.setStatus(CardStatus.BLOCKED);
+        updateCardDTO.setStatus(true);
 
         Card card = new Card();
         card.setBlocked(false);
 
         when(cardRepository.findById((long) cardId)).thenReturn(Optional.of(card));
 
-        cardService.updateCard(cardId, updateCardDTO);
+        cardService.blockCard(cardId, updateCardDTO);
 
         assertTrue(card.getBlocked());
         verify(cardRepository, times(1)).save(card);
     }
 
     @Test
-    public void testUpdateCardDeactivateCard() {
+    public void testUpdateCardActivateCard() {
         int cardId = 1;
         UpdateCardDTO updateCardDTO = new UpdateCardDTO();
-        updateCardDTO.setStatus(CardStatus.DEACTIVATED);
+        updateCardDTO.setStatus(true);
 
         Card card = new Card();
-        card.setActive(true);
+        card.setActive(false);
 
         when(cardRepository.findById((long) cardId)).thenReturn(Optional.of(card));
 
-        cardService.updateCard(cardId, updateCardDTO);
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            cardService.activateCard(cardId, updateCardDTO);
+        });
+        assertEquals("Kartica je deaktivirana i ne moze biti aktivirana", exception.getMessage());
 
-        assertFalse(card.getActive());
-        verify(cardRepository, times(1)).save(card);
+        verify(cardRepository, never()).save(any());
     }
 }

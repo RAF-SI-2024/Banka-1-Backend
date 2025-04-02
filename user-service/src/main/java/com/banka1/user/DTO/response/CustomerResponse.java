@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 
 @Data
@@ -27,7 +26,7 @@ public class CustomerResponse {
     private String username;
 
     @NonNull
-    private Long birthDate;
+    private String birthDate;
 
     @NonNull
     private Gender gender;

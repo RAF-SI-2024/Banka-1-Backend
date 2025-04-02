@@ -40,3 +40,7 @@ activemq-data/
 activemq-data/*
 message-brooker-service/activemq-data/
 message-brooker-service/activemq-data/*
+
+### Go ###
+vendor
+app

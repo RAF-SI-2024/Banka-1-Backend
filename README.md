@@ -27,7 +27,7 @@ First, you need to build the docker images of the submodules. To do this, run th
 
 After that has finished, do:
 ```shell
-docker compose -f compose.full.yaml up -d
+docker compose -f compose.local.yaml up -d
 ```
 
 
@@ -52,11 +52,11 @@ in the order above.
 
 If you are working on a single service you can also run:
 ```shell
-docker compose -f compose.full.yaml up -d
+docker compose -f compose.local.yaml up -d
 ```
 Afterwards, depending on which service you want to work on, you should do:
 ```shell
-docker compose -f compose.full.yaml stop <service-name>
+docker compose -f compose.local.yaml stop <service-name>
 ```
 After that, you can run
 ```shell

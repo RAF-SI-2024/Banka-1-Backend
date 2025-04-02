@@ -1,0 +1,53 @@
+contract_name,contract_size,contract_unit,maintenance_margin,type
+corn,5000,bushel,1600,AGRICULTURE
+soybean,5000,bushel,2700,AGRICULTURE
+soybean oil,60000,pound,2100,AGRICULTURE
+soybean meal,180000,pound,1750,AGRICULTURE
+Chicago wheat,5000,bushel,2500,AGRICULTURE
+live cattle,40000,pound,1600,AGRICULTURE
+wheat,5000,bushel,2600,AGRICULTURE
+feeder cattle,50000,pound,2850,AGRICULTURE
+lean hog,40000,pound,1750,AGRICULTURE
+pork cutout,40000,pound,1900,AGRICULTURE
+nonfat dry milk,44000,pound,2150,AGRICULTURE
+class 3 milk,200000,pound,1500,AGRICULTURE
+class 4 milk,200000,pound,1500,AGRICULTURE
+cash-settled butter,20000,pound,2100,AGRICULTURE
+cash-settled cheese,20000,pound,2200,AGRICULTURE
+block cheese,2000,pound,2100,AGRICULTURE
+oats,5000,bushel,1800,AGRICULTURE
+rough rice,180000,pound,1400,AGRICULTURE
+urea,200000,pound,8000,AGRICULTURE
+lumber,27500,board feet,1350,ENERGY
+crude oil,1000,barrel,5300,ENERGY
+natural gas,10000,MMBtu,3700,ENERGY
+gasoline,42000,gallon,6500,ENERGY
+e-mini crude oil,500,barrel,2750,ENERGY
+NY harbor ULSD,42000,gallon,7000,ENERGY
+micro crude oil,100,barrel,550,ENERGY
+Henry Hub natural gas,10000,MMBtu,3800,ENERGY
+buckeye jet fuel,42000,gallon,8000,ENERGY
+gold,100,troy ounce,8000,ENERGY
+silver,5000,troy ounce,9500,ENERGY
+platinum,50,troy ounce,3700,ENERGY
+copper,25000,pound,6100,ENERGY
+aluminum,50000,pound,3600,ENERGY
+e-mini copper,12500,pound,3050,ENERGY
+copper mini,12500,pound,1500,METALS
+silver mini,1000,troy ounce,2500,METALS
+platinum mini,10,troy ounce,2500,METALS
+gold options,100,troy ounce,5000,METALS
+silver options,5000,troy ounce,6000,METALS
+palladium options,100,troy ounce,7000,METALS
+cotton,50000,pound,2000,SOFTS
+coffee,37500,pound,1500,SOFTS
+sugar,112000,pound,1200,SOFTS
+cocoa,10,metric ton,1800,SOFTS
+orange juice,15000,pound,2000,SOFTS
+lumber options,1100,board feet,2000,SOFTS
+lean hog options,40000,pound,2000,MEATS
+live cattle options,40000,pound,2000,MEATS
+feeder cattle options,50000,pound,2000,MEATS
+butter options,20000,pound,3000,MEATS
+cheese options,20000,pound,3000,MEATS
+pork belly options,40000,pound,3500,MEATS

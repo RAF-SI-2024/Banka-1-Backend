@@ -27,7 +27,7 @@ public class CreateCustomerRequest {
     private String username;
 
     @NotNull(message = "Datum rođenja je obavezan")
-    private Long birthDate;
+    private String birthDate;
 
     @NotNull(message = "Pol je obavezan")
     private Gender gender;

@@ -1,0 +1,94 @@
+Exchange Name,Exchange Acronym,Exchange Mic Code,Country,Currency,Time Zone,Open Time,Close Time
+Nasdaq,NASDAQ,XNAS,USA,USD,America/New_York, 09:30, 16:00
+Jakarta Futures Exchange (bursa Berjangka Jakarta),BBJ,XBBJ,Indonesia,Indonesian Rupiah,Asia/Jakarta, 09:00, 17:30
+Asx - Trade24,SFE,XSFE,Australia,Australian Dollar,Australia/Melbourne, 10:00, 16:00
+Cboe Edga U.s. Equities Exchange Dark,EDGADARK,EDGD,United States,United States Dollar,America/New_York, 09:30, 16:00
+Clear Street,CLST,CLST,United States,United States Dollar,America/New_York, 09:30, 16:00
+Wall Street Access Nyc,WABR,WABR,United States,United States Dollar,America/New_York, 09:30, 16:00
+Marex Spectron Europe Limited - Otf,MSEL OTF,MSEL,Ireland,Euro,Europe/Dublin, 08:00, 16:30
+Borsa Italiana Equity Mtf,BITEQMTF,MTAH,Italy,Euro,Europe/Rome, 09:00, 17:25
+Clearcorp Dealing Systems India Limited - Astroid,ASTROID,ASTR,India,Indian Rupee,Asia/Kolkata, 09:15, 15:30
+Memx Llc Equities,MEMX,MEMX,United States,United States Dollar,America/New_York, 09:30, 16:00
+Natixis - Systematic Internaliser,NATX,NATX,France,Euro,Europe/Paris, 09:00, 17:30
+Currenex Ireland Mtf - Rfq,CNX MTF,ICXR,Ireland,Euro,Europe/Dublin, 08:00, 16:30
+Neo Exchange - Neo-l (market By Order),NEO-L,NEOE,Canada,Canadian Dollar,America/Montreal, 09:30, 16:00
+Polish Trading Point,PTP,PTPG,Poland,Polish Zloty,Europe/Warsaw, 09:00, 17:35
+Pfts Stock Exchange,PFTS,PFTS,Ukraine,Ukrainian Hryvnia,Europe/Kiev, 10:00, 17:30
+Cboe Australia - Transferable Custody Receipt Market,CHI-X,CXAR,Australia,Australian Dollar,Australia/Melbourne, 10:00, 16:00
+"Essex Radez Llc",GLPS,GLPS,United States,United States Dollar,America/New_York, 09:30, 16:00
+London Metal Exchange,LME,XLME,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Multi Commodity Exchange Of India Ltd.,MCX,XIMC,India,Indian Rupee,Asia/Kolkata, 09:15, 15:30
+Cassa Di Compensazione E Garanzia Spa - Ccp Agricultural Commodity Derivatives,CCGAGRIDER,CGGD,Italy,Euro,Europe/Rome, 09:00, 17:25
+Toronto Stock Exchange - Drk,TSX DRK,XDRK,Canada,Canadian Dollar,America/Montreal, 09:30, 16:00
+Chicago Mercantile Exchange,CME,XCME,United States,United States Dollar,America/New_York, 09:30, 16:00
+Neo Connect,NEO CONNECT,NEOC,Canada,Canadian Dollar,America/Montreal, 09:30, 16:00
+Ubs Ats,UBS ATS,UBSA,United States,United States Dollar,America/New_York, 09:30, 16:00
+Athens Exchange - Apa,ATHEX APA,AAPA,Greece,Euro,Europe/Athens, 10:15, 17:20
+Bny Mellon - Systematic Internaliser,BNYM,BKLF,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Bank Of Montreal - London Branch - Systematic Internaliser,BMO,BMLB,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Financial Information Contributors Exchange,FICONEX,FICX,Germany,Euro,Europe/Berlin, 08:00, 20:00
+Abn Amro Clearing Bank - Systematic Internaliser,AACB SI,ABNC,Netherlands,Euro,Europe/Amsterdam, 09:00, 17:40
+Credit Industriel Et Commercial - Systematic Internaliser,CIC,CMCI,France,Euro,Europe/Paris, 09:00, 17:30
+Posit Rfq,RFQ,XRFQ,Ireland,Euro,Europe/Dublin, 08:00, 16:30
+Aquis Exchange Plc,AQX,AQXE,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Financial And Risk Transactions Services Ireland Limited - Fxall Rfs Mtf,FRTSIL,FXRS,Ireland,Euro,Europe/Dublin, 08:00, 16:30
+Berenberg Fixed Income Uk - Systematic Internaliser,BGFU,BGFU,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+National Bank Financial Inc. - Systematic Internaliser,NBF,NBFL,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Jpbx,JPBX,JPBX,United States,United States Dollar,America/New_York, 09:30, 16:00
+"Miax Pearl Llc",MPRL,MPRL,United States,United States Dollar,America/New_York, 09:30, 16:00
+Canadian Securities Exchange,CSE LISTED,XCNQ,Canada,Canadian Dollar,America/Montreal, 09:30, 16:00
+"Two Sigma Securities Llc",SOHO,SOHO,United States,United States Dollar,America/New_York, 09:30, 16:00
+Currenex Ldfx,CX LDFX,LCUR,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+"Puma Capital Llc - Options",PUMA,PUMX,United States,United States Dollar,America/New_York, 09:30, 16:00
+Virtual Auction Global Markets - Mtf,VAGM MTF,VAGM,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+"Miami International Holdings Inc.",MIHI,MIHI,United States,United States Dollar,America/New_York, 09:30, 16:00
+Cboe  Europe - Lis Service,CBOE  LIS,LISX,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Global Securities Exchange,GSX,XGSX,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Tw Sef Llc,TWSEF,TWSF,United States,United States Dollar,America/New_York, 09:30, 16:00
+"Gtx Sef Llc",GTX,GTXS,United States,United States Dollar,America/New_York, 09:30, 16:00
+Freight Investor Services Limited,FIS,FISU,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Mercado De Valores De Buenos Aires S.a.,MERVAL,XMEV,Argentina,Argentine Peso,America/Argentina/Buenos_Aires, 11:00, 17:00
+Electricity Day-ahead Market,EXIST,XEDA,Turkey,Turkish Lira,Asia/Istanbul, 09:00, 17:30
+Emerging Markets Bond Exchange Limited,EMBX,EMBX,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Six Swiss Bilateral Trading Platform For Structured Otc Products,SIX,XBTR,Switzerland,Swiss Franc,Europe/Zurich, 09:00, 17:30
+Minneapolis Grain Exchange,MGE,XMGE,United States,United States Dollar,America/New_York, 09:30, 16:00
+Svenska Handelsbanken Ab - Svex,SVEX,SVEX,Sweden,Swedish Krona,Europe/Oslo, 09:00, 16:30
+Global Derivatives Exchange,GDX,XGDX,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Bnp Paribas Securities Services London Branch - Systematic Internaliser,BP2S LB SI,BSPL,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Cboe Europe Equities - European Equities (nl),CBOE EUROPE B.V.,CCXE,Netherlands,Euro,Europe/Amsterdam, 09:00, 17:40
+Bnp Paribas Sa - Systematic Internaliser,BNPP SA SI,BNPS,France,Euro,Europe/Paris, 09:00, 17:30
+Tradegate Exchange - Systematic Internaliser,TGAG,TGSI,Germany,Euro,Europe/Berlin, 08:00, 20:00
+Exane Bnp Paribas,EXEU,EXEU,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Liquidnet H20,LQNT H20,LIQH,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+New York Portfolio Clearing,NYPC,NYPC,United States,United States Dollar,America/New_York, 09:30, 16:00
+Gemma (gilt Edged Market Makers’association),GEMMA,GEMX,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Hudson River Trading (hrt),HRT,HRTF,United States,United States Dollar,America/New_York, 09:30, 16:00
+Santander Uk - Systematic Internaliser,SNUK,SNUK,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Aquis Exchange Plc Aquis - Eix Infrastructure Bond Market,AQUIS-EIX,EIXE,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Henex S.a.,HENEX,HEMO,Greece,Euro,Europe/Athens, 10:15, 17:20
+Jane Street Financial Ltd - Systematic Internaliser,JSF,JSSI,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Securitised Derivatives Market,SEDEX,SEDX,Italy,Euro,Europe/Rome, 09:00, 17:25
+Rivercross Dark,RIVERX,RICD,United States,United States Dollar,America/New_York, 09:30, 16:00
+Bank Polska Kasa Opieki S.a. - Systematic Internaliser,PEKAO,PKOP,Poland,Polish Zloty,Europe/Warsaw, 09:00, 17:35
+Xtend,XTND,XTND,Hungary,Hungarian Forint,Europe/Budapest, 09:00, 17:00
+The Green Stock Exchange - Acb Impact Markets,GSE,GRSE,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Susquehanna International Securities Limited - Systematic Internaliser,SISI,SISI,Ireland,Euro,Europe/Dublin, 08:00, 16:30
+"Banque Et Caisse D'epargne De L'etat Luxembourg - Bcee - Systematic Internaliser",BCEE,BCEE,Luxembourg,Euro,Europe/Luxembourg, 09:00, 17:35
+Merrill Lynch International - Rfq - Systematic Internaliser,MLI,MLRQ,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Westpac Banking Corporation - Systematic Internaliser,WBC SI,WSIN,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Bulgarian Stock Exchange - Alternative Market,BSE,ABUL,Bulgaria,Bulgarian Lev,Europe/Sofia, 10:10, 16:55
+Gfi Securities Llc - Creditmatch (latg),LATG,LATG,United States,United States Dollar,America/New_York, 09:30, 16:00
+Italian Derivatives Market,IDEM,XDMI,Italy,Euro,Europe/Rome, 09:00, 17:25
+Hudson River Trading,HRT,HRTX,United States,United States Dollar,America/New_York, 09:30, 16:00
+Nex Sef Mtf - Reset - Risk Mitigation Services,NSL,REST,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Banque Internationale A Luxembourg S.a. - Systematic Internaliser,BIL,BILU,Luxembourg,Euro,Europe/Luxembourg, 09:00, 17:35
+"Liquidnet Inc.",LQNT,LIUS,United States,United States Dollar,America/New_York, 09:30, 16:00
+Bnp Paribas Securities Services - Systematic Internaliser,BP2S,BPSX,France,Euro,Europe/Paris, 09:00, 17:30
+Ice Endex European Gas Spot,ICE ENDEX SPOT,NDXS,Netherlands,Euro,Europe/Amsterdam, 09:00, 17:40
+Memx Llc Dark,MEMXDARK,MEMD,United States,United States Dollar,America/New_York, 09:30, 16:00
+Societe Generale - Systematic Internaliser,SG SI,XSGA,France,Euro,Europe/Paris, 09:00, 17:30
+Level Ats - Vwap Cross,LEVEL,EBXV,United States,United States Dollar,America/New_York, 09:30, 16:00
+"Wells Fargo Securities Europe S.a.",WFSE,WFSE,France,Euro,Europe/Paris, 09:00, 17:30
+Bnp Paribas Sa London Branch - Systematic Internaliser,BNPP SA LB SI,BNPL,United Kingdom,British Pound Sterling,Europe/London, 08:00, 16:00
+Warsaw Stock Exchange/indices,GPWB,WIND,Poland,Polish Zloty,Europe/Warsaw, 09:00, 17:35
+test,TEST,TEST,Poland,test,America/New_York, 09:00, 23:35

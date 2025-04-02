@@ -1,8 +1,11 @@
+import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'idea'
+    id 'jacoco' 
 }
 
 group = 'com.banka1'
@@ -20,12 +23,6 @@ repositories {
     maven { url 'https://repo.spring.io/release' }
 }
 
-dependencyManagement {
-    imports {
-        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2024.0.0'
-    }
-}
-
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -34,6 +31,7 @@ configurations {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -48,47 +46,76 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
     implementation project(":common")
-
-    // Cucumber
-    testImplementation 'io.cucumber:cucumber-java:7.14.0'
-    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
-    testImplementation 'io.cucumber:cucumber-junit:7.14.0'
-
-    testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
-
-    // Mockito za unit testove
-    testImplementation 'org.mockito:mockito-core:4.8.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
+    implementation 'org.modelmapper:modelmapper:3.1.1'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     runtimeOnly 'org.aspectj:aspectjweaver'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     runtimeOnly 'org.apache.httpcomponents.client5:httpclient5'
-    implementation 'org.modelmapper:modelmapper:3.1.1' // za mapiranje modela (DTO)
-    implementation 'org.springframework.boot:spring-boot-starter-security'//
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'//
-    testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation 'org.mockito:mockito-core:5.14.2'
-
-    //cucumber
-    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
     testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
     testImplementation 'io.cucumber:cucumber-junit:7.14.0'
     testImplementation 'org.junit.vintage:junit-vintage-engine:5.9.3'
 
-    // Mockito za unit testove
-    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Configure JaCoCo
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir("reports/jacoco")
+    }
+    
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                "**/*Application*",
+                "**/config/**",
+                "**/model/**",
+                "**/dto/**",
+                "**/controller/**",
+                "**/*Controller.*"
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.60 // 60% Reko david
+            }
+        }
+    }
+}
+
+// Jacoco report generated
 tasks.named('test') {
     useJUnitPlatform()
     systemProperty "cucumber.execution.parallel.enabled", "false"
+    finalizedBy jacocoTestReport 
 }
 
+tasks.named('bootBuildImage', BootBuildImage) {
+    builder = "paketobuildpacks/builder-jammy-base"
+
+    buildpacks = ["urn:cnb:builder:paketo-buildpacks/java", "gcr.io/paketo-buildpacks/health-checker:latest"]
+    environment["BP_HEALTH_CHECKER_ENABLED"] = "true"
+    createdDate = "now"
+}

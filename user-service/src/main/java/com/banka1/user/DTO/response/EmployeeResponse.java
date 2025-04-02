@@ -1,7 +1,7 @@
 package com.banka1.user.DTO.response;
 
 import com.banka1.common.model.Permission;
-import com.banka1.user.model.helper.Department;
+import com.banka1.common.model.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.common.model.Position;
 import com.banka1.common.model.Position;

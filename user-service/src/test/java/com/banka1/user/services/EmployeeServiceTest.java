@@ -7,7 +7,7 @@ import com.banka1.user.DTO.response.EmployeeResponse;
 import com.banka1.user.DTO.response.EmployeesPageResponse;
 import com.banka1.user.listener.MessageHelper;
 import com.banka1.user.model.Employee;
-import com.banka1.user.model.helper.Department;
+import com.banka1.common.model.Department;
 import com.banka1.user.model.helper.Gender;
 import com.banka1.common.model.Permission;
 import com.banka1.common.model.Position;
@@ -31,10 +31,12 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.AssertionErrors;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -258,4 +260,101 @@ class EmployeeServiceTest {
             AssertionErrors.assertNotNull("Error", e);
         }
     }
+
+    @Test
+    void testCreateEmployee_MissingFields() {
+        CreateEmployeeRequest dto = new CreateEmployeeRequest();
+
+        when(modelMapper.map(any(CreateEmployeeRequest.class), eq(Employee.class))).thenReturn(new Employee());
+
+        assertThrows(RuntimeException.class, () -> employeeService.createEmployee(dto));
+    }
+
+    @Test
+    void testUpdatePermissions_EmployeeNotFound() {
+        UpdatePermissionsRequest dto = new UpdatePermissionsRequest();
+        dto.setPermissions(List.of(Permission.READ_EMPLOYEE));
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> employeeService.updatePermissions(1L, dto));
+    }
+
+    @Test
+    void testDeleteEmployee_EmployeeNotFound() {
+        when(employeeRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> employeeService.deleteEmployee(1L));
+    }
+
+
+
+    @Test
+    void testSearchInvalidPageSize() {
+        assertThrows(IllegalArgumentException.class, () -> employeeService.search(0, 0, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
+    }
+
+    @Test
+    void testFindById_NullInput() {
+        assertThrows(IllegalArgumentException.class, () -> employeeService.findById(null));
+    }
+
+    @Test
+    void testFetchActuaries() throws Exception {
+
+            Employee employee1 = new Employee();
+            employee1.setId(1L);
+            employee1.setFirstName("John");
+            employee1.setLastName("Doe");
+            employee1.setUsername("jdoe");
+            employee1.setBirthDate("2000-01-01");
+            employee1.setGender(Gender.MALE);
+            employee1.setEmail("jdoe@banka.rs");
+            employee1.setPhoneNumber("123456");
+            employee1.setAddress("Street 1");
+            employee1.setPosition(Position.WORKER);
+            employee1.setDepartment(Department.IT);
+            employee1.setActive(true);
+            employee1.setIsAdmin(false);
+            employee1.setPermissions(List.of());
+
+            Employee employee2 = new Employee();
+            employee2.setId(2L);
+            employee2.setFirstName("Jane");
+            employee2.setLastName("Smith");
+            employee2.setUsername("jsmith");
+            employee2.setBirthDate("2001-02-02");
+            employee2.setGender(Gender.FEMALE);
+            employee2.setEmail("jsmith@banka.rs");
+            employee2.setPhoneNumber("654321");
+            employee2.setAddress("Street 2");
+            employee2.setPosition(Position.WORKER);
+            employee2.setDepartment(Department.IT);
+            employee2.setActive(true);
+            employee2.setIsAdmin(false);
+            employee2.setPermissions(List.of());
+
+            List<Employee> actuaryList = Arrays.asList(employee1, employee2);
+
+            EmployeeResponse response1 = new EmployeeResponse(
+                    1L, "John", "Doe", "jdoe", "2000-01-01",
+                    Gender.MALE, "jdoe@banka.rs", "123456", "Street 1",
+                    Position.WORKER, Department.IT, true, false, List.of()
+            );
+
+            EmployeeResponse response2 = new EmployeeResponse(
+                    2L, "Jane", "Smith", "jsmith", "2001-02-02",
+                    Gender.FEMALE, "jsmith@banka.rs", "654321", "Street 2",
+                    Position.WORKER, Department.IT, true, false, List.of()
+            );
+
+            List<EmployeeResponse> responseList = Arrays.asList(response1, response2);
+
+
+            when(employeeRepository.getActuaries()).thenReturn(actuaryList);
+            assertThat(employeeService.getAllActuaries()).contains(response1, response2);
+            Mockito.verify(employeeRepository).getActuaries();
+
+    }
+
 }

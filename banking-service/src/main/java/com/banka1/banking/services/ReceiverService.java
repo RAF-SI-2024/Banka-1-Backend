@@ -4,7 +4,6 @@ import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
 import com.banka1.banking.repository.ReceiverRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -55,7 +54,7 @@ public class ReceiverService {
 
         Receiver receiver = optionalReceiver.get();
 
-        receiver.setAccountNumber(receiver.getAccountNumber());
+        receiver.setAccountNumber(receiverDTO.getAccountNumber());
         if(receiverDTO.getFullName() != null){
             String[] fullName = receiverDTO.getFullName().trim().split("\\s+",2);
             receiver.setFirstName(fullName[0]);
@@ -72,6 +71,10 @@ public class ReceiverService {
             throw new IllegalArgumentException("Primalac sa ID " + id + " ne postoji.");
         }
         receiverRepository.deleteById(id);
+    }
+
+    public boolean accountExists(Long id){
+        return receiverRepository.existsById(id);
     }
 
 }

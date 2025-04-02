@@ -14,8 +14,6 @@ services:
     image: 'apache/activemq-classic:latest'
     ports:
       - '61616:61616'
-    volumes:
-      - 'dev_activemq_data:/opt/activemq/data'
   dev-banking-db:
     image: 'postgres:17-alpine'
     ports:
@@ -24,8 +22,6 @@ services:
       POSTGRES_USER: banking_service_user
       POSTGRES_PASSWORD: banking_service_password
       POSTGRES_DB: banking_db
-    volumes:
-      - 'dev_banking_db_data:/var/lib/postgresql/data/'
   dev-user-db:
     image: 'postgres:17-alpine'
     ports:
@@ -34,9 +30,3 @@ services:
       POSTGRES_USER: user_service_user
       POSTGRES_PASSWORD: user_service_password
       POSTGRES_DB: user_service_db
-    volumes:
-      - 'dev_user_db_data:/var/lib/postgresql/data/'
-volumes:
-  dev_activemq_data: null
-  dev_banking_db_data: null
-  dev_user_db_data: null

@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 @Component
 public class MessageHelper {
 
-    private Validator validator;
-    private ObjectMapper objectMapper;
+    private final Validator validator;
+    private final ObjectMapper objectMapper;
 
     public MessageHelper(Validator validator, ObjectMapper objectMapper) {
         this.validator = validator;

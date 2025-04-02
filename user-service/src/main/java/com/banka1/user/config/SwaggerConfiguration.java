@@ -14,7 +14,7 @@ public class SwaggerConfiguration {
     public OpenAPI api() {
         return new OpenAPI()
                 .info(new Info().title("Banka 1")
-                        .description("Banka 1")
+                        .description("User Service")
                         .version("0.0.1"))
                 .addSecurityItem(
                     new SecurityRequirement().addList("jwt")

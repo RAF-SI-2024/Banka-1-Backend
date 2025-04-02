@@ -2,13 +2,10 @@ package com.banka1.banking.controllers;
 
 import com.banka1.banking.aspect.AccountAuthorization;
 import com.banka1.banking.dto.OtpTokenDTO;
-import com.banka1.banking.models.Account;
-import com.banka1.banking.models.Currency;
 import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.repository.TransferRepository;
 import com.banka1.banking.services.OtpTokenService;
-import com.banka1.banking.services.TransactionService;
 import com.banka1.banking.services.TransferService;
 import com.banka1.banking.utils.ResponseTemplate;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,10 +15,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -108,11 +101,11 @@ public class OtpTokenController {
             }
 
 
-            return ResponseTemplate.create(ResponseEntity.ok(),
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK),
                     true, Map.of("message", "OTP validan, transakcija izvršena."), null);
 
         } catch (Exception e) {
-            return ResponseTemplate.create(ResponseEntity.badRequest(), e);
+            return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, e.getMessage());
         }
     }
 }

@@ -2,7 +2,6 @@
 # If you want to use caddy outside of docker you can replace user-service, banking-service, with localhost
 
 
-# Use this if you don't want to use TLS (HTTPS)
 localhost {
 	handle_path /api/user/* {
 		reverse_proxy user-service:8081
@@ -10,6 +9,10 @@ localhost {
 
 	handle_path /api/banking/* {
 		reverse_proxy banking-service:8082
+	}
+
+	handle_path /api/trading/* {
+	  reverse_proxy host.docker.internal:3000
 	}
 
 	handle {

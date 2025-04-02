@@ -18,6 +18,9 @@ public class Card {
     private String cardNumber;
 
     @Column(nullable = false)
+    private String cardName;
+
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private CardBrand cardBrand; // VISA, MASTERCARD, AMERICAN_EXPRESS
 
@@ -48,6 +51,6 @@ public class Card {
     private Double cardLimit;
 
     @ManyToOne
-    @JoinColumn(name = "authorized_person_id", nullable = true)
+    @JoinColumn(name = "authorized_person_id")
     private AuthorizedPerson authorizedPerson;
 }

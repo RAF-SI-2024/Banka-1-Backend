@@ -14,7 +14,6 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
@@ -45,7 +44,7 @@ public class ResetPasswordService {
         var customer = customerRepository.findByEmail(resetPasswordRequest.getEmail());
         var employee = employeeRepository.findByEmail(resetPasswordRequest.getEmail());
         if (customer.isEmpty() && employee.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Email adresa nije pronadjena.");
         var resetPassword = new ResetPassword();
         resetPassword.setToken(generateToken());
         resetPassword.setUsed(false);
@@ -71,19 +70,18 @@ public class ResetPasswordService {
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
-
         resetPasswordRepository.save(resetPassword);
     }
 
     public void resetPassword(ResetPasswordConfirmationRequest resetPasswordConfirmationRequest) {
         var resetPassword = resetPasswordRepository.findByToken(resetPasswordConfirmationRequest.getToken());
         if (resetPassword == null)
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token not found.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token nije pronadjen.");
 
         if (resetPassword.getExpirationDate() < System.currentTimeMillis())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token expired.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token je istekao.");
         if (resetPassword.getUsed())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token already used.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token je već iskorišćen.");
         String salt = generateSalt();
         String hashed = BCrypt.hashpw(resetPasswordConfirmationRequest.getPassword() + salt, BCrypt.gensalt());
         if (resetPassword.getType() == 0) {

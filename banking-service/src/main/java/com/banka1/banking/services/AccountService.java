@@ -11,10 +11,8 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
-
 import com.banka1.banking.repository.TransactionRepository;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
@@ -22,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 
 @Service
@@ -37,8 +32,11 @@ public class AccountService {
     private final String destinationEmail;
     private final UserServiceCustomer userServiceCustomer;
     private final CardService cardService;
+    private final BankAccountUtils bankAccountUtils;
+    private final TransactionRepository transactionRepository;
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService) {
+
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils,TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -46,6 +44,8 @@ public class AccountService {
         this.destinationEmail = destinationEmail;
         this.userServiceCustomer = userServiceCustomer;
         this.cardService = cardService;
+        this.bankAccountUtils = bankAccountUtils;
+        this.transactionRepository = transactionRepository;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
@@ -85,6 +85,7 @@ public class AccountService {
         account.setMonthlyMaintenanceFee(0.0);
 
         account.setAccountNumber(generateAccountNumber(account));
+        account.setCurrencyType(createAccountDTO.getCurrency());
 
         account.setEmployeeID(employeeId);
 
@@ -132,7 +133,7 @@ public class AccountService {
 
     public Account updateAccount(Long accountId, UpdateAccountDTO updateAccountDTO) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Račun sa ID-jem " + accountId + " nije pronađen"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Korisnik nije pronađen"));
 
         Optional.ofNullable(updateAccountDTO.getDailyLimit()).ifPresent(account::setDailyLimit);
         Optional.ofNullable(updateAccountDTO.getMonthlyLimit()).ifPresent(account::setMonthlyLimit);
@@ -154,8 +155,6 @@ public class AccountService {
     }
     //realno metode mogu da se spoje i ne treba odvojen dto al ajde kao da ni ne dam opciju useru da slucajno sam sebi menja status
 
-    @Autowired
-    private TransactionRepository transactionRepository;
     public List<Transaction> getTransactionsForAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Račun sa ID-jem " + accountId + " nije pronađen"));
@@ -163,10 +162,16 @@ public class AccountService {
         List<Transaction> transactionsFrom = transactionRepository.findByFromAccountId(account);
         List<Transaction> transactionsTo = transactionRepository.findByToAccountId(account);
 
-        List<Transaction> allTransactions = new ArrayList<>();
-        allTransactions.addAll(transactionsFrom);
-        allTransactions.addAll(transactionsTo);
+        List<Transaction> allTransactions = new ArrayList<>(transactionsFrom);
 
+        for (Transaction transaction : transactionsTo) {
+            if (!Objects.equals(transaction.getFromAccountId().getId(), accountId)) {
+                allTransactions.add(transaction);
+            }
+        }
+
+        if(!Objects.equals(bankAccountUtils.getBankAccountForCurrency(CurrencyType.RSD).getOwnerID(), account.getOwnerID()))
+            allTransactions.removeIf(Transaction::getBankOnly);
         return allTransactions;
     }
 

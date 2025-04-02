@@ -15,7 +15,7 @@ public class UpdateCustomerRequest {
 
     private String username;
 
-    private Long birthDate;
+    private String birthDate;
 
     private Gender gender;
 

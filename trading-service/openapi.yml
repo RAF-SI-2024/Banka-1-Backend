@@ -1,0 +1,441 @@
+openapi: 3.0.0
+info:
+  title: Trading API
+  description: API za upravljanje aktuarima, hartijama od vrednosti i berzanskim transakcijama
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/trading
+    description: Lokalni server
+
+paths:
+  /actuaries:
+    get:
+      summary: Dobavi listu svih aktuara
+      operationId: getActuaries
+      tags:
+        - Aktuari
+      responses:
+        "200":
+          description: Lista aktuara
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    userId:
+                      type: integer
+                      description: ID korisnika iz korisničkog servisa
+                    fullName:
+                      type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+                      enum: [agent, supervisor]
+                    limit:
+                      type: number
+                    usedLimit:
+                      type: number
+                    needApproval:
+                      type: boolean
+              example:
+                - id: 1
+                  userId: 101
+                  fullName: "Marko Marković"
+                  email: "marko@example.com"
+                  role: "agent"
+                  limit: 100000
+                  usedLimit: 15000
+                  needApproval: true
+
+  /actuaries/{id}:
+    get:
+      summary: Dobavi detalje određenog aktuara
+      operationId: getActuaryById
+      tags:
+        - Aktuari
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Detalji aktuara
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  userId:
+                    type: integer
+                  fullName:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+                    enum: [agent, supervisor]
+                  limit:
+                    type: number
+                  usedLimit:
+                    type: number
+                  needApproval:
+                    type: boolean
+              example:
+                id: 1
+                userId: 101
+                fullName: "Marko Marković"
+                email: "marko@example.com"
+                role: "agent"
+                limit: 100000
+                usedLimit: 15000
+                needApproval: true
+
+  /actuaries/{id}/limit:
+    put:
+      summary: Ažuriranje limita agenta
+      operationId: updateActuaryLimit
+      tags:
+        - Aktuari
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit:
+                  type: number
+                  example: 150000
+      responses:
+        "200":
+          description: Limit uspešno ažuriran
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Limit updated successfully"
+
+  /securities:
+    get:
+      summary: Lista svih hartija od vrednosti
+      operationId: getSecurities
+      tags:
+        - Hartije od vrednosti
+      responses:
+        "200":
+          description: Lista hartija
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    ticker:
+                      type: string
+                    name:
+                      type: string
+                    type:
+                      type: string
+                      enum: [stock, forex, future, option]
+                    exchange:
+                      type: string
+                    lastPrice:
+                      type: number
+                    availableQuantity:
+                      type: integer
+              example:
+                - id: 1
+                  ticker: "AAPL"
+                  name: "Apple Inc."
+                  type: "stock"
+                  exchange: "NASDAQ"
+                  lastPrice: 150.00
+                  availableQuantity: 10000
+
+  /securities/{ticker}:
+    put:
+      summary: Ažuriranje podataka o hartiji od vrednosti
+      operationId: updateSecurity
+      tags:
+        - Hartije od vrednosti
+      parameters:
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lastPrice:
+                  type: number
+                  description: Nova cena hartije
+                availableQuantity:
+                  type: integer
+                  description: Nova dostupna količina
+      responses:
+        "200":
+          description: Hartija uspešno ažurirana
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Security updated successfully"
+
+  /securities/user/{userId}:
+    get:
+      summary: Lista hartija koje korisnik poseduje
+      operationId: getUserSecurities
+      tags:
+        - Hartije od vrednosti
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista hartija korisnika
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    securityId:
+                      type: integer
+                    ticker:
+                      type: string
+                    quantity:
+                      type: integer
+                    purchasePrice:
+                      type: number
+              example:
+                - securityId: 1
+                  ticker: "AAPL"
+                  quantity: 5
+                  purchasePrice: 150.50
+
+  /securities/available:
+    get:
+      summary: Lista hartija dostupnih za kupovinu
+      operationId: getAvailableSecurities
+      tags:
+        - Hartije od vrednosti
+      responses:
+        "200":
+          description: Lista hartija dostupnih za kupovinu
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    securityId:
+                      type: integer
+                    ticker:
+                      type: string
+                    availableQuantity:
+                      type: integer
+                    lastPrice:
+                      type: number
+              example:
+                - securityId: 1
+                  ticker: "AAPL"
+                  availableQuantity: 100
+                  lastPrice: 150.00
+
+  /orders:
+    post:
+      summary: Kreiranje novog order-a
+      operationId: createOrder
+      tags:
+        - Orderi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                securityId:
+                  type: integer
+                orderType:
+                  type: string
+                  enum: [market, limit, stop, stop-limit]
+                quantity:
+                  type: integer
+                pricePerUnit:
+                  type: number
+                direction:
+                  type: string
+                  enum: [buy, sell]
+              example:
+                userId: 101
+                securityId: 2
+                orderType: "limit"
+                quantity: 10
+                pricePerUnit: 50.00
+                direction: "buy"
+      responses:
+        "201":
+          description: Order uspešno kreiran
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    example: 123
+
+  /orders/{id}:
+    delete:
+      summary: Otkazivanje order-a
+      operationId: cancelOrder
+      tags:
+        - Orderi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order uspešno otkazan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order canceled successfully"
+
+  /orders/{id}/action:
+    put:
+      summary: Akcije nad order-om (odobravanje, odbijanje, pauziranje, modifikacija)
+      operationId: updateOrder
+      tags:
+        - Orderi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [approve, decline, pause, modify]
+                  description: Akcija koja se izvršava nad order-om
+                newQuantity:
+                  type: integer
+                  description: Nova količina order-a (samo ako je `modify`)
+              example:
+                action: "modify"
+                newQuantity: 5
+      responses:
+        "200":
+          description: Order uspešno ažuriran
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Order updated successfully"
+
+  /securities/{id}:
+    get:
+      summary: Lista hartija koje korisnik poseduje
+      operationId: getUserSecurities
+      tags:
+        - Hartije od vrednosti
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista hartija u vlasništvu korisnika
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ticker:
+                          type: string
+                        type:
+                          type: string
+                        amount:
+                          type: integer
+                        price:
+                          type: number
+                        profit:
+                          type: number
+                        lastModified:
+                          type: integer
+                  error:
+                    type: string
+              example:
+                success: true
+                data:
+                  - ticker: "AAPL"
+                    type: "stock"
+                    amount: 5
+                    price: 150.5
+                    profit: 100.0
+                    lastModified: 1711822400
+                error: ""
