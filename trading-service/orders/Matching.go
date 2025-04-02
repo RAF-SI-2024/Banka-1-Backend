@@ -9,7 +9,6 @@ import (
 	"time"
 	"strings"
 	"os"
-	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,12 +22,10 @@ func MatchOrder(order types.Order) {
 			}
 		}
 
-        if !canPreExecute(order) {
-            fmt.Println("Nije ispunjen uslov za order")
-            return
-        }
-
-		url := fmt.Sprintf("%s/orders/execute", os.Getenv("BANKING_SERVICE"))
+		if !canPreExecute(order) {
+			fmt.Println("Nije ispunjen uslov za order")
+			return
+		}
 
 		for order.RemainingParts != nil && *order.RemainingParts > 0 {
 			tx := db.DB.Begin()
@@ -38,32 +35,15 @@ func MatchOrder(order types.Order) {
 			}
 
 			price := getOrderPrice(order)
-			executePartial(order, quantityToExecute, price)
-
-			*order.RemainingParts -= quantityToExecute
-
-			db.DB.First(&order, order.ID)
-			if order.RemainingParts == nil || *order.RemainingParts == 0 {
-				order.IsDone = true
-				order.Status = "done"
-			}
-
-			db.DB.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
-				"remaining_parts": *order.RemainingParts,
-				"is_done":         order.IsDone,
-				"status":          order.Status,
-			})
 
 			token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price)
+			url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
 			var hadError bool
 
 			if err == nil {
 				agent := fiber.Post(url)
 
-				body, err := json.Marshal(map[string]string{ "token": token })
-
 				if err == nil {
-					agent.Body(body)
 					statusCode, _, errs := agent.Bytes()
 
 					if len(errs) != 0 || statusCode != 200 {
@@ -79,10 +59,27 @@ func MatchOrder(order types.Order) {
 			if hadError {
 				tx.Rollback()
 				fmt.Printf("Nalog %v nije izvršen\n", order.ID)
-				continue
+				break
 			} else {
+				executePartial(order, quantityToExecute, price)
+
+				*order.RemainingParts -= quantityToExecute
+
+				db.DB.First(&order, order.ID)
+				if order.RemainingParts == nil || *order.RemainingParts == 0 {
+					order.IsDone = true
+					order.Status = "done"
+				}
+
+				db.DB.Model(&types.Order{}).Where("id = ?", order.ID).Updates(map[string]interface{}{
+					"remaining_parts": *order.RemainingParts,
+					"is_done":         order.IsDone,
+					"status":          order.Status,
+				})
+
 				if err := tx.Commit().Error; err != nil {
 					fmt.Printf("Nalog %v nije izvršen: %w\n", order.ID, err)
+					break
 				} else {
 					fmt.Printf("Nalog %v izvršen\n", order.ID)
 				}
@@ -95,32 +92,35 @@ func MatchOrder(order types.Order) {
 }
 
 func getListingPrice(order types.Order) float64 {
-    var security types.Security
-    err := db.DB.First(&security, order.SecurityID).Error
-    if err != nil {
-        fmt.Printf("Security nije pronadjen za ID %d: %v", order.SecurityID, err)
-        return -1.0
-    }
+	var security types.Security
+	err := db.DB.First(&security, order.SecurityID).Error
+	if err != nil {
+		fmt.Printf("Security nije pronadjen za ID %d: %v\n", order.SecurityID, err)
+		return -1.0
+	}
 
-    var listing types.Listing
-    err = db.DB.Where("ticker = ?", security.Ticker).First(&listing).Error
-    if err != nil {
-        fmt.Printf("Listing nije pronadjen za Ticker %s: %v", security.Ticker, err)
-        return -1.0
-    }
+	var listing types.Listing
+	err = db.DB.Where("ticker = ?", security.Ticker).First(&listing).Error
+	if err != nil {
+		fmt.Printf("Listing nije pronadjen za Ticker %s: %v\n", security.Ticker, err)
+		return -1.0
+	}
 
-    if order.Direction == "sell" {
-        return float64(listing.Bid)
-    } else {
-        return float64(listing.Ask)
-    }
+	if order.Direction == "sell" {
+		return float64(listing.Bid)
+	} else {
+		return float64(listing.Ask)
+	}
 }
 
 func getOrderPrice(order types.Order) float64 {
 	if strings.ToUpper(order.OrderType) == "MARKET" {
-        var security types.Security
-        db.DB.First(&security, order.SecurityID)
-        return security.LastPrice
+		var security types.Security
+		db.DB.First(&security, order.SecurityID)
+		return security.LastPrice
+	}
+	if order.StopPricePerUnit != nil {
+		return *order.StopPricePerUnit
 	}
 	if order.LimitPricePerUnit != nil {
 		return *order.LimitPricePerUnit
@@ -165,6 +165,11 @@ func executePartial(order types.Order, quantity int, price float64) {
 
 	if match.UserID == order.UserID {
 		fmt.Println("Preskočen self-match")
+		return
+	}
+
+	if !canPreExecute(match) {
+		fmt.Println("Preskočen match sa nedovoljnim uslovima")
 		return
 	}
 
@@ -265,21 +270,32 @@ func CanExecuteAll(order types.Order) bool {
 }
 
 func CanExecuteAny(order types.Order) bool {
-	return order.OrderType != "stop-limit" && order.OrderType != "stop" && getExecutableParts(order) > 0
+	return getExecutableParts(order) > 0
 }
 
 func canPreExecute(order types.Order) bool {
-    if strings.ToUpper(order.OrderType) == "LIMIT" {
-        price := getListingPrice(order)
-        if price < 0 { return false }
-
-        if order.Direction == "sell" {
-            return price >= *order.LimitPricePerUnit
-        } else {
-            return price <= *order.LimitPricePerUnit
-        }
-    }
-    return true
+	price := getListingPrice(order)
+	if price < 0 { return false }
+	if strings.ToUpper(order.OrderType) == "LIMIT" {
+		if order.Direction == "sell" {
+			return price >= *order.LimitPricePerUnit
+		} else {
+			return price <= *order.LimitPricePerUnit
+		}
+	} else if strings.ToUpper(order.OrderType) == "STOP" {
+		if order.Direction == "sell" {
+			return price <= *order.StopPricePerUnit
+		} else {
+			return price >= *order.StopPricePerUnit
+		}
+	} else if strings.ToUpper(order.OrderType) == "STOP-LIMIT" {
+		if order.Direction == "sell" {
+			return price <= *order.StopPricePerUnit && price >= *order.LimitPricePerUnit
+		} else {
+			return price >= *order.StopPricePerUnit && price <= *order.LimitPricePerUnit
+		}
+	}
+	return true
 }
 
 func getBuyerID(a, b types.Order) uint {

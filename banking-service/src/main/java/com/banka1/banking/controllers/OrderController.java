@@ -13,10 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -28,18 +25,17 @@ public class OrderController {
     private final AuthService authService;
     private final OrderService orderService;
 
-    @PostMapping("/execute")
-    @Transactional
-    public ResponseEntity<?> executeOrder(@RequestBody String token) {
+    @PostMapping("/execute/{token}")
+    public ResponseEntity<?> executeOrder(@PathVariable String token) {
         Claims claims = authService.parseToken(token);
 
         try {
             String direction = claims.get("direction", String.class);
-            Long accountId = claims.get("accountId", Long.class);
-            Long userId = claims.get("userId", Long.class);
-            Double amount = claims.get("amount", Double.class);
+            Long accountId = Long.valueOf(claims.get("accountId", Integer.class));
+            Long userId = Long.valueOf(claims.get("userId", Integer.class));
+            Double amount = Double.valueOf(claims.get("amount", String.class));
 
-            if(direction == null || accountId == null || userId == null || amount == null)
+            if(direction == null)
                 throw new Exception();
 
             Double finalAmount = orderService.executeOrder(direction, userId, accountId, amount);
@@ -48,6 +44,7 @@ public class OrderController {
         } catch (IllegalArgumentException e) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.FORBIDDEN), false, null, "Nedovoljna sredstva");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, "Nevalidni podaci");
         }
     }

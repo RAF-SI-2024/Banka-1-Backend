@@ -107,6 +107,19 @@ func CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
+	department, ok := c.Locals("department").(string)
+	if !ok {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "[MIDDLEWARE] Greska prilikom dohvatanja department vrednosti",
+		})
+	}
+
+	status := "pending"
+	if department == "SUPERVISOR" {
+		status = "approved"
+	}
+
 	var orderType string
 	switch {
 	case orderRequest.StopPricePerUnit == nil && orderRequest.LimitPricePerUnit == nil:
@@ -129,7 +142,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		LimitPricePerUnit: orderRequest.LimitPricePerUnit,
 		OrderType:         orderType,
 		Direction:         orderRequest.Direction,
-		Status:            "pending", // TODO: pribaviti needs approval vrednost preko token-a?
+		Status:            status, // TODO: pribaviti needs approval vrednost preko token-a?
 		ApprovedBy:        nil,
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,

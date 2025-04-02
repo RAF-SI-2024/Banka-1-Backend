@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	// "fmt"
+	"fmt"
 	"encoding/base64"
 	"os"
 
@@ -41,7 +41,7 @@ func NewOrderToken(direction string, userID uint, accountID uint, amount float64
 		"direction": direction,
 		"userId": userID,
 		"accountId": accountID,
-		"amount": amount,
+		"amount": fmt.Sprintf("%f", amount),
 	}).SignedString(key)
 
 	if err != nil {

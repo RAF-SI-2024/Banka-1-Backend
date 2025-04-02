@@ -4,6 +4,7 @@ import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.services.implementation.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +13,6 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
-    private final AuthService authService;
     private final AccountService accountService;
     private final BankAccountUtils bankAccountUtils;
     private final AccountRepository accountRepository;
@@ -38,7 +38,7 @@ public class OrderService {
             if(!Objects.equals(account.getOwnerID(), userId))
                 throw new RuntimeException();
 
-            // TODO: provizija
+            // TODO: provizije
 
             if(direction.compareToIgnoreCase("buy") == 0) {
                 if(account.getBalance() < finalAmount) {
