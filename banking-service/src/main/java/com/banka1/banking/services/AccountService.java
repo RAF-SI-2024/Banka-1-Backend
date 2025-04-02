@@ -34,9 +34,10 @@ public class AccountService {
     private final CardService cardService;
     private final BankAccountUtils bankAccountUtils;
     private final TransactionRepository transactionRepository;
+    private final CompanyService companyService;
 
 
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils,TransactionRepository transactionRepository) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils, TransactionRepository transactionRepository, CompanyService companyService) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -46,6 +47,7 @@ public class AccountService {
         this.cardService = cardService;
         this.bankAccountUtils = bankAccountUtils;
         this.transactionRepository = transactionRepository;
+        this.companyService = companyService;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
@@ -109,6 +111,8 @@ public class AccountService {
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
+
+        if (createAccountDTO.getCreateCompanyDTO() != null) companyService.createCompany(createAccountDTO.getCreateCompanyDTO());
 
         return account;
     }
