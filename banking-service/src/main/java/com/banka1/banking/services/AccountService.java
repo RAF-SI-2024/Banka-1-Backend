@@ -8,6 +8,7 @@ import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Company;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
@@ -91,6 +92,11 @@ public class AccountService {
 
         account.setEmployeeID(employeeId);
 
+        if (createAccountDTO.getCreateCompanyDTO() != null) {
+            Company company = companyService.createCompany(createAccountDTO.getCreateCompanyDTO());
+            account.setCompany(company);
+        }
+
         account = accountRepository.save(account);
 
         if (createAccountDTO.getCreateCard()) {
@@ -111,8 +117,6 @@ public class AccountService {
         emailDTO.setType("email");
 
         jmsTemplate.convertAndSend(destinationEmail, messageHelper.createTextMessage(emailDTO));
-
-        if (createAccountDTO.getCreateCompanyDTO() != null) companyService.createCompany(createAccountDTO.getCreateCompanyDTO());
 
         return account;
     }
