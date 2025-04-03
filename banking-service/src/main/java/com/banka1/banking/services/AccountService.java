@@ -1,6 +1,7 @@
 package com.banka1.banking.services;
 
 import com.banka1.banking.dto.CreateCardDTO;
+import com.banka1.banking.dto.CreateCompanyDTO;
 import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.dto.request.CreateAccountDTO;
@@ -8,6 +9,7 @@ import com.banka1.banking.dto.request.UpdateAccountDTO;
 import com.banka1.banking.dto.request.UserUpdateAccountDTO;
 import com.banka1.banking.listener.MessageHelper;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Company;
 import com.banka1.banking.models.Transaction;
 import com.banka1.banking.models.helper.*;
 import com.banka1.banking.repository.AccountRepository;
@@ -34,9 +36,9 @@ public class AccountService {
     private final CardService cardService;
     private final BankAccountUtils bankAccountUtils;
     private final TransactionRepository transactionRepository;
+    private final CompanyService companyService;
 
-
-    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils,TransactionRepository transactionRepository) {
+    public AccountService(AccountRepository accountRepository, JmsTemplate jmsTemplate, MessageHelper messageHelper, ModelMapper modelMapper, @Value("${destination.email}") String destinationEmail, UserServiceCustomer userServiceCustomer, CardService cardService, BankAccountUtils bankAccountUtils,TransactionRepository transactionRepository, CompanyService companyService) {
         this.accountRepository = accountRepository;
         this.jmsTemplate = jmsTemplate;
         this.messageHelper = messageHelper;
@@ -46,6 +48,7 @@ public class AccountService {
         this.cardService = cardService;
         this.bankAccountUtils = bankAccountUtils;
         this.transactionRepository = transactionRepository;
+        this.companyService = companyService;
     }
 
     public Account createAccount(CreateAccountDTO createAccountDTO, Long employeeId) {
@@ -60,6 +63,21 @@ public class AccountService {
         }
 
         Account account = modelMapper.map(createAccountDTO, Account.class);
+
+        if (account.getSubtype().equals(AccountSubtype.BUSINESS) && createAccountDTO.getCompanyData() != null) {
+            CreateCompanyDTO companyDTO = createAccountDTO.getCompanyData();
+
+            Company existingCompany = companyService.findByCompanyNumber(companyDTO.getCompanyNumber());
+
+            Company companyToUse;
+            if (existingCompany == null) {
+                companyToUse = companyService.createCompany(companyDTO);
+            } else {
+                companyToUse = existingCompany;
+            }
+
+            account.setCompany(companyToUse);
+        }
 
         if (account.getBalance() != null) {
             account.setBalance(account.getBalance());

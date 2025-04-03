@@ -14,4 +14,5 @@ public class CreateAccountByEmployeeDTO {
     private CreateAccountDTO createAccountDTO;
     @NonNull
     private Long employeeId;
+    private CreateCompanyDTO companyData;
 }

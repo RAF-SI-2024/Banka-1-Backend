@@ -42,4 +42,9 @@ public class CompanyService {
     public List<Company> findAllByOwnerId(Long ownerId) {
         return companyRepository.findByOwnerID(ownerId);
     }
+
+    public Company findByCompanyNumber(String companyNumber) {
+        return companyRepository.findByCompanyNumber(companyNumber).orElse(null);
+    }
+
 }

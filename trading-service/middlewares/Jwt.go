@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	// "fmt"
+	"fmt"
 	"encoding/base64"
 	"os"
 
@@ -29,4 +29,24 @@ func readToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
 		return nil, claims, err
 	}
 	return token, claims, nil
+}
+
+func NewOrderToken(direction string, userID uint, accountID uint, amount float64) (string, error) {
+	key, err := getSigningKey()
+	if err != nil {
+		return "", err
+	}
+
+	tokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"direction": direction,
+		"userId": userID,
+		"accountId": accountID,
+		"amount": fmt.Sprintf("%f", amount),
+	}).SignedString(key)
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

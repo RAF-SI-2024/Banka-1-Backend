@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2/log"
@@ -145,6 +146,15 @@ func SaveOptionsToDB(ticker string, yahooResp YahooOptionsApiResponse) error {
 			for _, call := range opt.Calls {
 				optionTicker := GenerateOptionTicker(ticker, expirationDate, "C", call.Strike)
 
+				if expirationDate.IsZero() {
+					parsed, err := ParseOptionSettlementDate(optionTicker)
+					if err == nil {
+						expirationDate = parsed
+					} else {
+						log.Warnf("Fallback parsing failed for ticker %s: %v", optionTicker, err)
+					}
+				}
+
 				// Check if Listing already exists
 				var optionListing types.Listing
 				if err := db.DB.Where("ticker = ?", optionTicker).First(&optionListing).Error; err != nil {
@@ -249,4 +259,29 @@ func GetOptionsForSymbol(symbol string) ([]types.Option, error) {
 	}
 
 	return options, nil
+}
+
+func ParseOptionSettlementDate(ticker string) (time.Time, error) {
+	if len(ticker) < 15 {
+		return time.Time{}, fmt.Errorf("invalid option ticker format")
+	}
+
+	yearStr := ticker[len(ticker)-15 : len(ticker)-13]
+	monthStr := ticker[len(ticker)-13 : len(ticker)-11]
+	dayStr := ticker[len(ticker)-11 : len(ticker)-9]
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid year in option ticker: %w", err)
+	}
+	month, err := strconv.Atoi(monthStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid month in option ticker: %w", err)
+	}
+	day, err := strconv.Atoi(dayStr)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid day in option ticker: %w", err)
+	}
+
+	return time.Date(2000+year, time.Month(month), day, 0, 0, 0, 0, time.UTC), nil
 }

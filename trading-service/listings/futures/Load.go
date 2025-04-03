@@ -187,8 +187,12 @@ func loadFutures(path string) error {
 				log.Infof("Failed to update listing: %v\n", err)
 			}
 		}
-		settlementDate := time.Date(2000+year, time.Month(i%12+1), 1, 0, 0, 0, 0, time.UTC)
-
+		settlementDate, err := ParseFuturesSettlementDate(ticker)
+		if err != nil {
+			tx.Rollback()
+			log.Errorf("Failed to parse settlement date for ticker %s: %v", ticker, err)
+			continue
+		}
 		var future types.FuturesContract
 		if err := tx.Where("listing_id = ?", listing.ID).First(&future).Error; err != nil {
 			future = types.FuturesContract{
@@ -220,4 +224,54 @@ func loadFutures(path string) error {
 	}
 
 	return nil
+}
+
+var monthCodeMap = map[rune]time.Month{
+	'F': time.January,
+	'G': time.February,
+	'H': time.March,
+	'J': time.April,
+	'K': time.May,
+	'M': time.June,
+	'N': time.July,
+	'Q': time.August,
+	'U': time.September,
+	'V': time.October,
+	'X': time.November,
+	'Z': time.December,
+}
+
+func ParseFuturesSettlementDate(ticker string) (time.Time, error) {
+	if len(ticker) < 3 {
+		return time.Time{}, fmt.Errorf("nevalidan ticker: prekratak")
+	}
+
+	suffix := ticker[len(ticker)-3:]
+	monthCode := rune(suffix[0])
+	yearSuffix := suffix[1:]
+
+	month, ok := monthCodeMap[monthCode]
+	if !ok {
+		return time.Time{}, fmt.Errorf("nepoznat kod meseca: %c", monthCode)
+	}
+
+	year := 2000 + parseYearSuffix(yearSuffix)
+
+	settlement := GetLastWeekdayOfMonth(year, month)
+	return settlement, nil
+}
+
+func parseYearSuffix(s string) int {
+	var year int
+	fmt.Sscanf(s, "%02d", &year)
+	return year
+}
+
+func GetLastWeekdayOfMonth(year int, month time.Month) time.Time {
+	firstOfNextMonth := time.Date(year, month+1, 1, 0, 0, 0, 0, time.UTC)
+	lastDay := firstOfNextMonth.AddDate(0, 0, -1)
+	for lastDay.Weekday() == time.Saturday || lastDay.Weekday() == time.Sunday {
+		lastDay = lastDay.AddDate(0, 0, -1)
+	}
+	return lastDay
 }

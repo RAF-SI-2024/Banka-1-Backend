@@ -12,19 +12,21 @@ type Actuary struct {
 }
 
 type Security struct {
-	ID             uint    `gorm:"primaryKey" json:"id,omitempty"`
-	Ticker         string  `gorm:"unique;not null" json:"ticker,omitempty"`
-	Name           string  `gorm:"not null" json:"name,omitempty"`
-	Type           string  `gorm:"type:text;not null" json:"type,omitempty"`
-	Exchange       string  `gorm:"not null" json:"exchange,omitempty"`
-	LastPrice      float64 `gorm:"not null" json:"lastPrice,omitempty"`
-	AskPrice       float64 `gorm:"default:null" json:"ask,omitempty"`
-	BidPrice       float64 `gorm:"default:null" json:"bid,omitempty"`
-	Volume         int64   `gorm:"default:0" json:"availableQuantity,omitempty"`
-	SettlementDate *string `gorm:"default:null" json:"settlementDate,omitempty"` // Samo za futures i opcije
-	// data for option
-	StrikePrice *float64 `gorm:"default:null" json:"strikePrice,omitempty"`
-	OptionType  *string  `gorm:"default:null" json:"optionType,omitempty"`
+	ID             uint     `gorm:"primaryKey" json:"id,omitempty"`
+	UserID         uint     `gorm:"not null" json:"userId,omitempty"`
+	Ticker         string   `gorm:"unique;not null" json:"ticker,omitempty"`
+	Name           string   `gorm:"not null" json:"name,omitempty"`
+	Type           string   `gorm:"type:text;not null" json:"type,omitempty"`
+	Exchange       string   `gorm:"not null" json:"exchange,omitempty"`
+	LastPrice      float64  `gorm:"not null" json:"lastPrice,omitempty"`
+	AskPrice       float64  `gorm:"default:null" json:"ask,omitempty"`
+	BidPrice       float64  `gorm:"default:null" json:"bid,omitempty"`
+	Volume         int64    `gorm:"default:0" json:"availableQuantity,omitempty"`
+	SettlementDate *string  `gorm:"default:null" json:"settlementDate,omitempty"` // Samo za futures i opcije
+	ContractSize   int64    `gorm:"not null" json:"contractSize"`
+	StrikePrice    *float64 `gorm:"default:null" json:"strikePrice,omitempty"`
+	OptionType     *string  `gorm:"default:null" json:"optionType,omitempty"`
+	PreviousClose  float64  `gorm:"default:null" json:"previousClose,omitempty"`
 	// data for futures
 }
 
@@ -80,13 +82,12 @@ type Portfolio struct {
 
 type Tax struct {
 	ID            uint    `gorm:"primaryKey"`
-	UserID        uint    `gorm:"not null;index:idx_tax_user_createdat"`
-	MonthYear     string  `gorm:"not null;index"` // Format: YYYY-MM
+	UserID        uint    `gorm:"foreignKey;index:idx_tax_user_createdat"`
+	MonthYear     string  `gorm:"not null;index"`
 	TaxableProfit float64 `gorm:"not null"`
 	TaxAmount     float64 `gorm:"not null"`
 	IsPaid        bool    `gorm:"default:false"`
-	CreatedAt     int64   `gorm:"autoCreateTime;index:idx_tax_user_createdat"`
-	User          uint    `gorm:"foreignKey:UserID"`
+	CreatedAt     string  `gorm:"autoCreateTime;index:idx_tax_user_createdat"`
 }
 
 type Exchange struct {

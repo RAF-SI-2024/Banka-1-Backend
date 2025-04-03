@@ -142,7 +142,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		LimitPricePerUnit: orderRequest.LimitPricePerUnit,
 		OrderType:         orderType,
 		Direction:         orderRequest.Direction,
-		Status:            status,
+		Status:            status, // TODO: pribaviti needs approval vrednost preko token-a?
 		ApprovedBy:        nil,
 		IsDone:            false,
 		RemainingParts:    &orderRequest.Quantity,

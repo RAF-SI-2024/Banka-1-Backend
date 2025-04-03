@@ -1,5 +1,6 @@
 package com.banka1.banking.dto.request;
 
+import com.banka1.banking.dto.CreateCompanyDTO;
 import com.banka1.banking.models.helper.AccountStatus;
 import com.banka1.banking.models.helper.AccountSubtype;
 import com.banka1.banking.models.helper.AccountType;
@@ -33,5 +34,5 @@ public class CreateAccountDTO {
     private Boolean createCard;
 
     private Double balance;
-
+    private CreateCompanyDTO companyData;
 }
