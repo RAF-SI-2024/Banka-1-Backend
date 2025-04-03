@@ -17,7 +17,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -116,7 +116,7 @@ public class EmployeeService {
         return employeeRepository.save(existingEmployee);
     }
 
-    public Employee updatePermissions(Long id, UpdatePermissionsRequest updatePermissionsRequest){
+    public Employee updatePermissions(Long id, UpdatePermissionsRequest updatePermissionsRequest) {
         Employee existingEmployee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zaposleni nije pronađen"));
 
@@ -125,6 +125,7 @@ public class EmployeeService {
 
         return employeeRepository.save(existingEmployee);
     }
+
     public void deleteEmployee(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zaposleni nije pronađen"));
@@ -165,7 +166,8 @@ public class EmployeeService {
         var direction = Sort.Direction.ASC;
         if (sortOrder.isPresent()) {
             switch (sortOrder.get().toLowerCase()) {
-                case "asc" -> {}
+                case "asc" -> {
+                }
                 case "desc" -> direction = Sort.Direction.DESC;
                 default -> throw new RuntimeException("Smer sortiranja nije prepoznat.");
             }
@@ -197,8 +199,7 @@ public class EmployeeService {
             }
             var example = Example.of(employee, matcher);
             employeePage = employeeRepository.findAll(example, pageRequest);
-        }
-        else
+        } else
             employeePage = employeeRepository.findAll(pageRequest);
         return new EmployeesPageResponse(
                 employeePage.getTotalElements(),
@@ -206,11 +207,22 @@ public class EmployeeService {
         );
     }
 
+
+    public List<Employee> getFilteredEmployees(String firstName, String lastName, String email, String position) {
+        if (!StringUtils.hasText(firstName) && !StringUtils.hasText(lastName) &&
+                !StringUtils.hasText(email) && !StringUtils.hasText(position)) {
+            return employeeRepository.findAll(); // Ako nema filtera, vrati sve
+        }
+
+        return employeeRepository.findFilteredEmployees(firstName, lastName, email, position);
+    }
+
     public List<EmployeeResponse> getAllActuaries(){
         return employeeRepository.getActuaries()
-                        .stream()
-                        .map(EmployeeService::getEmployeeResponse)
-                        .toList();
+                .stream()
+                .map(EmployeeService::getEmployeeResponse)
+                .toList();
+
 
     }
 }

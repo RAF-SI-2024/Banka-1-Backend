@@ -1,16 +1,14 @@
 package controllers
 
 import (
+  "banka1.com/db"
+	"banka1.com/dto"
+	"banka1.com/services"
+	"banka1.com/types"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
-	"strings"
-
-	"banka1.com/db"
-	"banka1.com/dto"
-	"banka1.com/services"
-	"banka1.com/types"
 )
 
 type ActuaryController struct {
@@ -59,6 +57,9 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 		return c.Status(400).JSON(response)
 	}
 
+	// Početak transakcije
+	tx := db.DB.Begin()
+
 	actuary := types.Actuary{
 		UserID:       actuaryDTO.UserID,
 		Role:         actuaryDTO.Role,
@@ -67,15 +68,17 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 		NeedApproval: actuaryDTO.NeedApproval,
 	}
 
-	result := db.DB.Create(&actuary)
-	if result.Error != nil {
-		response := types.Response{
+	if err := tx.Create(&actuary).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   "Greska u bazi.",
-		}
-		return c.Status(500).JSON(response)
+			Error:   "Greška u bazi pri kreiranju aktuara.",
+		})
 	}
+
+	// Commit transakcije
+	tx.Commit()
 
 	response := types.Response{
 		Success: true,
@@ -150,70 +153,43 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 		Error:   "",
 	})
 }
-
-// POPRAVITI FILTER
 func (ac *ActuaryController) FilterActuaries(c *fiber.Ctx) error {
-	var actuaries []types.Actuary
-
 	name := c.Query("name")
 	surname := c.Query("surname")
 	email := c.Query("email")
 	position := c.Query("position")
 
-	result := db.DB.Find(&actuaries)
-	if result.Error != nil {
-		return c.Status(500).JSON(types.Response{
-			Success: false,
-			Error:   "Greska pri preuzimanju aktuara.",
-		})
-	}
-
-	actuaryMap := make(map[uint]types.Actuary)
-	for _, act := range actuaries {
-		actuaryMap[act.UserID] = act
-	}
-
-	employees, err := services.GetEmployees()
+	employees, err := services.GetEmployeesFiltered(name, surname, email, position)
 	if err != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Neuspesno preuzimanje zaposlenih iz user-service-a",
+			Error:   "Greška pri preuzimanju zaposlenih sa user-service.",
 		})
 	}
 
-	var filteredEmployees []dto.FilteredActuaryDTO
+	var actuaries []dto.FilteredActuaryDTO
+
 	for _, emp := range employees {
-		if actuary, exists := actuaryMap[emp.ID]; exists {
-			if (name == "" || containsIgnoreCase(emp.FirstName, name)) &&
-				(surname == "" || containsIgnoreCase(emp.LastName, surname)) &&
-				(email == "" || containsIgnoreCase(emp.Email, email)) &&
-				(position == "" || emp.Position == position) {
-
-				filteredEmployees = append(filteredEmployees, dto.FilteredActuaryDTO{
-					ID:           emp.ID,
-					FirstName:    emp.FirstName,
-					LastName:     emp.LastName,
-					Email:        emp.Email,
-					Role:         actuary.Role,
-					LimitAmount:  actuary.LimitAmount,
-					UsedLimit:    actuary.UsedLimit,
-					NeedApproval: actuary.NeedApproval,
-				})
-			}
+		var actuary dto.FilteredActuaryDTO
+		result := db.DB.Table("actuaries").Where("user_id = ?", emp.ID).Scan(&actuary)
+		if result.Error != nil {
+			return c.Status(500).JSON(types.Response{
+				Success: false,
+				Error:   "Greška pri preuzimanju aktuara.",
+			})
 		}
-	}
 
-	if len(filteredEmployees) == 0 {
-		return c.JSON(types.Response{
-			Success: true,
-			Data:    []dto.FilteredActuaryDTO{},
-			Error:   "Ne postoji ni jedan aktuar.",
-		})
+		actuary.ID = emp.ID
+		actuary.FirstName = emp.FirstName
+		actuary.LastName = emp.LastName
+		actuary.Email = emp.Email
+		actuary.Position = emp.Position
+		actuaries = append(actuaries, actuary)
 	}
 
 	return c.JSON(types.Response{
 		Success: true,
-		Data:    filteredEmployees,
+		Data:    actuaries,
 		Error:   "",
 	})
 }
@@ -239,10 +215,4 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 		Data:    actuary,
 		Error:   "",
 	})
-}
-
-func containsIgnoreCase(source, search string) bool {
-	sourceLower := strings.ToLower(source)
-	searchLower := strings.ToLower(search)
-	return strings.Contains(sourceLower, searchLower)
 }
