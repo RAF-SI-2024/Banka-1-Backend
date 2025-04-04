@@ -36,7 +36,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
             @Param("position") String position
     );
 
-    @Query("SELECT e FROM Employee e WHERE e.department = 'AGENT'")
+//    @Query("SELECT e FROM Employee e WHERE e.department = 'AGENT'")
+//    List<Employee> getActuaries();
+
+    @Query("SELECT e FROM Employee e WHERE e.department = 'AGENT' OR e.department ='SUPERVISOR'")
     List<Employee> getActuaries();
 
 }

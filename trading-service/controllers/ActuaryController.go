@@ -8,7 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"strconv"
-	"strings"
 )
 
 type ActuaryController struct {
@@ -126,6 +125,32 @@ func (ac *ActuaryController) GetAllActuaries(c *fiber.Ctx) error {
 	})
 }
 
+func (ac *ActuaryController) GetActuaryByID(c *fiber.Ctx) error {
+	id := c.Params("id") // Uzima ID iz URL-a
+
+	var actuary types.Actuary
+	result := db.DB.First(&actuary, id)
+	if result.Error != nil {
+		//if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		//	return c.Status(404).JSON(types.Response{
+		//		Success: false,
+		//		Error:   "Actuary not found",
+		//	})
+		//}
+		log.Infof("Database error: GetActuaryByID  %v\n", result.Error)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Database error",
+		})
+	}
+
+	return c.JSON(types.Response{
+		Success: true,
+		Data:    actuary,
+		Error:   "",
+	})
+}
+
 // ChangeAgentLimits godoc
 //
 //	@Summary		Izmena limita aktuara
@@ -202,16 +227,16 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 //
 
 func (ac *ActuaryController) FilterActuaries(c *fiber.Ctx) error {
-	name := c.Query("name")
-	surname := c.Query("surname")
+	firstName := c.Query("firstName")
+	lastName := c.Query("lastName")
 	email := c.Query("email")
 	position := c.Query("position")
 
-	employees, err := services.GetEmployeesFiltered(name, surname, email, position)
+	employees, err := services.GetEmployeesFiltered(firstName, lastName, email, position)
 	if err != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Greška pri preuzimanju zaposlenih sa user-service.",
+			Error:   "Greška pri preuzimanju zaposlenih sa user-service.  heeej",
 		})
 	}
 
@@ -219,13 +244,13 @@ func (ac *ActuaryController) FilterActuaries(c *fiber.Ctx) error {
 
 	for _, emp := range employees {
 		var actuary dto.FilteredActuaryDTO
-		result := db.DB.Table("actuaries").Where("user_id = ?", emp.ID).Scan(&actuary)
-		if result.Error != nil {
-			return c.Status(500).JSON(types.Response{
-				Success: false,
-				Error:   "Greška pri preuzimanju aktuara.",
-			})
-		}
+		//	result := db.DB.Table("actuaries").Where("user_id = ?", emp.ID).Scan(&actuary)
+		//	if result.Error != nil {
+		//		return c.Status(500).JSON(types.Response{
+		//			Success: false,
+		//			Error:   "Greška pri preuzimanju aktuara.",
+		//		})
+		//	}
 
 		actuary.ID = emp.ID
 		actuary.FirstName = emp.FirstName
@@ -265,17 +290,18 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 	})
 }
 
-func containsIgnoreCase(source, search string) bool {
-	sourceLower := strings.ToLower(source)
-	searchLower := strings.ToLower(search)
-	return strings.Contains(sourceLower, searchLower)
-}
+//func containsIgnoreCase(source, search string) bool {
+//	sourceLower := strings.ToLower(source)
+//	searchLower := strings.ToLower(search)
+//	return strings.Contains(sourceLower, searchLower)
+//}
 
 func InitActuaryRoutes(app *fiber.App) {
 	actuaryController := NewActuaryController()
 
 	app.Post("/actuaries", actuaryController.CreateActuary)
 	app.Get("/actuaries/all", actuaryController.GetAllActuaries)
+	app.Get("/actuaries/:ID", actuaryController.GetActuaryByID)
 	app.Put("/actuaries/:ID/limit", actuaryController.ChangeAgentLimits)
 	app.Get("/actuaries/filter", actuaryController.FilterActuaries)
 	app.Put("/actuaries/:ID/reset-used-limit", actuaryController.ResetActuaryLimit)

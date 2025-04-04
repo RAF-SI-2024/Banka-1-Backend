@@ -267,14 +267,14 @@ public class EmployeeController {
         }
     }
 
-    @GetMapping("/filtered")
+    @GetMapping("/actuaries/filtered")
     @Authorization(permissions = { Permission.READ_EMPLOYEE })
     @Operation(summary = "Pretraga zaposlenih", description = "Vraća listu zaposlenih filtriranih po zadatim parametrima.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista zaposlenih uspešno dobijena"),
             @ApiResponse(responseCode = "400", description = "Neispravni parametri pretrage")
     })
-    public ResponseEntity<?> getFilteredEmployees(
+    public ResponseEntity<?> getFilteredActuaryEmployees(
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String email,
