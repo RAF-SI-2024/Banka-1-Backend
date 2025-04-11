@@ -126,7 +126,7 @@ public class AuthServiceTests {
         when(receiverService.findById(1L)).thenReturn(receiver);
 
         when(account.getOwnerID()).thenReturn(2L);
-        when(receiver.getOwnerAccountId()).thenReturn(1L);
+        when(receiver.getCustomerId()).thenReturn(3L);
         //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
 
@@ -219,7 +219,7 @@ public class AuthServiceTests {
         when(account.getOwnerID()).thenReturn(2L);
         //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
-        when(receiver.getOwnerAccountId()).thenReturn(1L);
+        when(receiver.getCustomerId()).thenReturn(3L);
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(true);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(true);
@@ -272,7 +272,7 @@ public class AuthServiceTests {
         when(account.getOwnerID()).thenReturn(1L);
         //when(loan.getAccount()).thenReturn(account);
         when(card.getAccount()).thenReturn(account);
-        when(receiver.getOwnerAccountId()).thenReturn(1L);
+        when(receiver.getCustomerId()).thenReturn(1L);
 
         when(accountAuthorization.customerOnlyOperation()).thenReturn(true);
         when(cardAuthorization.customerOnlyOperation()).thenReturn(true);
@@ -344,7 +344,7 @@ public class AuthServiceTests {
         when(createAccountDTO.getOwnerID()).thenReturn(1L);
         when(exchangeMoneyTransferDTO.getAccountFrom()).thenReturn(1L);
         when(otpTokenDTO.getTransferId()).thenReturn(1L);
-        when(receiverDTO.getOwnerAccountId()).thenReturn(1L);
+        when(receiverDTO.getCustomerId()).thenReturn(1L);
         when(internalTransferDTO.getFromAccountId()).thenReturn(1L);
         when(moneyTransferDTO.getFromAccountNumber()).thenReturn("1");
         when(createCardDTO.getAccountID()).thenReturn(1L);

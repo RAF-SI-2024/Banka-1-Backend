@@ -11,7 +11,9 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ReceiverDTO {
 
-    private Long ownerAccountId;
+   // private Long ownerAccountId;
+
+    private Long customerId;
 
     private String accountNumber;
 

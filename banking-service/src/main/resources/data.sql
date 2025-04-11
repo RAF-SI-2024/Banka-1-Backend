@@ -171,21 +171,21 @@ INSERT INTO account (id,account_number, balance, company_id, daily_limit, monthl
 VALUES (21,'111000122344457610', 20000000.0, 2, 10000.0, 5000.0, 0.0, 0.0, 'RSD',
         1630454400000, 2025030500000, 1, 0.0, 0.0, 6, 'ACTIVE', 'CURRENT', 'STANDARD');
 
--- Receivers 
-INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
-VALUES (101, '111000100000000210', 'Nemanja', 'Marjanov');
 
-INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
-VALUES (101, '111000100330222210', 'Nikola', 'Nikolic');
 
-INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
-VALUES (101, '111000100335672210', 'Jelena', 'Jovanovic');
+-- Receivers for Jovan Pavlović (user ID = 3)
+INSERT INTO receiver (customer_id, account_number, first_name, last_name, address)
+VALUES (3, '111000100000000210', 'Nemanja', 'Marjanov', 'Knez Mihailova 8');
 
-INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
-VALUES (103, '111000100000000220', 'Nemanja', 'Marjanov');
+INSERT INTO receiver (customer_id, account_number, first_name, last_name, address)
+VALUES (3, '111000122344455610', 'Jelena', 'Jovanovic', 'Knez Mihailova 8');
 
-INSERT INTO receiver (owner_account_id, account_number, first_name, last_name)
-VALUES (103, '111000100366112220', 'Jelena', 'Jovanovic');
+INSERT INTO receiver (customer_id, account_number, first_name, last_name, address)
+VALUES (3, '111000111225344510', 'Anastasija', 'Milinković', 'Knez Mihailova 8');
+
+INSERT INTO receiver (customer_id, account_number, first_name, last_name, address)
+VALUES (3, '111000177655544310', 'Nikola', 'Nikolic', 'Knez Mihailova 8');
+
 
 -- Loans
 INSERT INTO loan (number_of_installments, loan_type, currency_type, interest_type,

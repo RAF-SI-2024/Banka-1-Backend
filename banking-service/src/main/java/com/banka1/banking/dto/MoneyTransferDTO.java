@@ -16,4 +16,5 @@ public class MoneyTransferDTO {
     private String payementReference;
     private String payementDescription;
 
+    private Long savedReceiverId;
 }

@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 public class Transfer {
 
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -68,4 +69,7 @@ public class Transfer {
 
     @Column()
     private String note;
+
+    @Column(nullable = true)
+    private Long savedReceiverId;
 }

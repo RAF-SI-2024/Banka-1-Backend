@@ -1,4 +1,5 @@
 package com.banka1.banking.controllers;
+
 import com.banka1.banking.aspect.ReceiverAuthorization;
 import com.banka1.banking.dto.ReceiverDTO;
 import com.banka1.banking.models.Receiver;
@@ -73,15 +74,15 @@ public class ReceiverController {
                             examples = @ExampleObject(value = "{ \"success\": false, \"error\": \"Nema sačuvanih primaoca za ovaj nalog.\" }"))
             )
     })
-    @GetMapping("/{accountId}")
+    @GetMapping("/{receiverId}")
     @ReceiverAuthorization
     public ResponseEntity<?> getReceivers(
             @Parameter(description = "ID naloga korisnika", required = true, example = "2")
-            @PathVariable Long accountId) {
-        if (!receiverService.accountExists(accountId)) {
+            @PathVariable Long receiverId) {
+        if (!receiverService.accountExists(receiverId)) {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.NOT_FOUND), false, null, "Nalog ne postoji.");
         }
-        List<Receiver> receivers = receiverService.getReceiversByAccountId(accountId);
+        List<Receiver> receivers = receiverService.getReceiversByCustomerId(receiverId);
         return ResponseTemplate.create(ResponseEntity.status(HttpStatus.OK), true, Map.of("receivers", receivers), null);
     }
 

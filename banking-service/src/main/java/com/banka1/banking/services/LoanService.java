@@ -264,7 +264,8 @@ public class LoanService {
                         customer.getAddress(),
                         "271",
                         "Kredit ID " + loan.getId(),
-                        "Kredit"
+                        "Kredit",
+                        null
                 );
 
                 if (!transferService.validateMoneyTransfer(transferDTO)) {
@@ -442,7 +443,8 @@ public class LoanService {
                     "Adresa",
                     "277",
                     "Rata ID " + installment.getId(),
-                    "Rata kredita"
+                    "Rata kredita",
+                    null
             );
 
             if (!transferService.validateMoneyTransfer(transferDTO))

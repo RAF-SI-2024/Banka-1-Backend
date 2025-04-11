@@ -31,14 +31,14 @@ public class ReceiverServiceTest {
     @BeforeEach
     void setUp() {
         receiverDTO = new ReceiverDTO();
-        receiverDTO.setOwnerAccountId(1L);
+        receiverDTO.setCustomerId(1L);
         receiverDTO.setAccountNumber("123-456789");
         receiverDTO.setFullName("Marko Marković");
         receiverDTO.setAddress("Kralja Petra 12");
 
         receiver = new Receiver();
         receiver.setId(1L);
-        receiver.setOwnerAccountId(1L);
+        receiver.setCustomerId(1L);
         receiver.setAccountNumber("123-456789");
         receiver.setFirstName("Marko");
         receiver.setLastName("Marković");
@@ -47,7 +47,7 @@ public class ReceiverServiceTest {
 
     @Test
     void createReceiverShouldSaveReceiverWhenNewReceiver() {
-        when(receiverRepository.existsByOwnerAccountIdAndAccountNumber(1L, "123-456789")).thenReturn(false);
+        when(receiverRepository.existsByCustomerIdAndAccountNumber(1L, "123-456789")).thenReturn(false);
         when(receiverRepository.save(any(Receiver.class))).thenReturn(receiver);
 
         Receiver savedReceiver = receiverService.createReceiver(receiverDTO);
@@ -60,16 +60,16 @@ public class ReceiverServiceTest {
 
     @Test
     void createReceiverShouldThrowExceptionWhenReceiverAlreadyExists() {
-        when(receiverRepository.existsByOwnerAccountIdAndAccountNumber(1L, "123-456789")).thenReturn(true);
+        when(receiverRepository.existsByCustomerIdAndAccountNumber(1L, "123-456789")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> receiverService.createReceiver(receiverDTO));
     }
 
     @Test
     void getReceiversByAccountIdShouldReturnReceivers() {
-        when(receiverRepository.findByOwnerAccountId(1L)).thenReturn(List.of(receiver));
+        when(receiverRepository.findByCustomerIdOrderByUsageCountDesc(1L)).thenReturn(List.of(receiver));
 
-        List<Receiver> receivers = receiverService.getReceiversByAccountId(1L);
+        List<Receiver> receivers = receiverService.getReceiversByCustomerId(1L);
 
         assertEquals(1, receivers.size());
         assertEquals("Marko", receivers.get(0).getFirstName());

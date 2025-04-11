@@ -13,8 +13,11 @@ public class Receiver {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+//    @Column(nullable = false)
+//    private Long ownerAccountId;
+
     @Column(nullable = false)
-    private Long ownerAccountId;
+    private Long customerId;
 
     @Column(nullable = false)
     private String accountNumber;
@@ -27,4 +30,8 @@ public class Receiver {
 
     @Column()
     private String address;
+
+    @Column()
+    private int usageCount = 0;
+
 }

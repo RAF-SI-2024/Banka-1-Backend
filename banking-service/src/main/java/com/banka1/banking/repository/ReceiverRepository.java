@@ -10,11 +10,16 @@ import java.util.Optional;
 @Repository
 public interface ReceiverRepository extends JpaRepository<Receiver, Long> {
 
-    List<Receiver> findByOwnerAccountId(Long ownerAccountId);
+    //List<Receiver> findByOwnerAccountId(Long ownerAccountId);
+
+    List<Receiver> findByCustomerIdOrderByUsageCountDesc(Long customerId);
+
 
     Optional<Receiver> findById(Long id);
 
-    boolean existsByOwnerAccountIdAndAccountNumber(Long ownerAccountId, String accountNumber);
+   // boolean existsByOwnerAccountIdAndAccountNumber(Long ownerAccountId, String accountNumber);
+
+    boolean existsByCustomerIdAndAccountNumber(Long customerId, String accountNumber);
 
     void deleteById(Long id);
 

@@ -10,5 +10,4 @@ public class InternalTransferDTO {
     private Long fromAccountId;
     private Long toAccountId;
     private Double amount;
-
 }
