@@ -61,11 +61,13 @@ presubmits:
               # Promeniti ovu komandu da pokreće one servise koji vam trebaju za vaše
               # testove. Moguće je više puta pokrenuti "docker compose up" za različite
               # Docker Compose servise.
-              # docker compose up -d trading-db message-broker user-service banking-service
+              go install github.com/swaggo/swag/cmd/swag@latest
+              docker compose up -d trading-db message-broker user-service banking-service
       
               SERVICE_NAME="trading-service"
               cd trading-service
               go test
+              swag init
           securityContext:
             privileged: true
           imagePullPolicy: Always

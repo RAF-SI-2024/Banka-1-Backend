@@ -5,6 +5,7 @@ import (
 	"banka1.com/types"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -95,7 +96,10 @@ func TestUpdatePublicCountSuccess(t *testing.T) {
 	app.Put("/securities/public-count", NewPortfolioController().UpdatePublicCount)
 
 	db.InitTestDatabase()
-	portfolio := types.Portfolio{UserID: 12, Quantity: 5, PublicCount: 2}
+	// Make index be higher than anything the other tests use
+	security := types.Security{ID: 10000001, Type: "Stock"}
+	db.DB.Create(&security)
+	portfolio := types.Portfolio{UserID: 12, Quantity: 5, PublicCount: 2, Security: security}
 	db.DB.Create(&portfolio)
 
 	payload := map[string]interface{}{
@@ -108,10 +112,9 @@ func TestUpdatePublicCountSuccess(t *testing.T) {
 
 	resp, _ := app.Test(req)
 	assert.Equal(t, 200, resp.StatusCode)
-
 	var response types.Response
 	_ = json.NewDecoder(resp.Body).Decode(&response)
-
+	fmt.Printf("Response: %+v\n", response)
 	assert.True(t, response.Success)
 	assert.Contains(t, response.Data, "Updated public count")
 }

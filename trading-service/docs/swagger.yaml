@@ -1,9 +1,18 @@
 definitions:
+  controllers.PaginatedOrders:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/types.OrderResponse'
+        type: array
+      totalCount:
+        type: integer
+    type: object
   controllers.UpdatePublicCountRequest:
     properties:
-      public:
+      portfolio_id:
         type: integer
-      security_id:
+      public:
         type: integer
     type: object
   dto.ActuaryDTO:
@@ -52,17 +61,41 @@ definitions:
         type: integer
       last_modified:
         type: integer
+      portfolio_id:
+        type: integer
       price:
         type: number
       profit:
         type: number
       public:
         type: integer
+      securityId:
+        type: integer
       symbol:
         type: string
       ticker:
         type: string
       type:
+        type: string
+    type: object
+  dto.RealizedProfitResponse:
+    properties:
+      per_security:
+        items:
+          $ref: '#/definitions/dto.SecurityProfit'
+        type: array
+      total_profit:
+        type: number
+      user_id:
+        type: integer
+    type: object
+  dto.SecurityProfit:
+    properties:
+      profit:
+        type: number
+      security_id:
+        type: integer
+      ticker:
         type: string
     type: object
   dto.UpdateActuaryDTO:
@@ -88,6 +121,8 @@ definitions:
       needApproval:
         description: Da li orderi agenta trebaju supervizorsko odobrenje
         type: boolean
+      position:
+        type: string
       usedLimit:
         description: Samo za agente, resetuje se dnevno
         type: number
@@ -129,10 +164,8 @@ definitions:
         type: integer
     required:
     - account_id
-    - aon
     - contract_size
     - direction
-    - margin
     - quantity
     - security_id
     - user_id
@@ -245,6 +278,38 @@ definitions:
         type: number
       price:
         type: number
+    type: object
+  types.ListingHistory:
+    properties:
+      ask:
+        type: number
+      bid:
+        type: number
+      contractSize:
+        type: integer
+      createdAt:
+        type: string
+      exchange:
+        $ref: '#/definitions/types.Exchange'
+      exchangeID:
+        type: integer
+      id:
+        type: integer
+      lastRefresh:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      snapshotDate:
+        description: za koji dan je snapshot
+        type: string
+      subtype:
+        type: string
+      ticker:
+        type: string
+      type:
+        type: string
     type: object
   types.Option:
     properties:
@@ -510,6 +575,30 @@ paths:
           schema:
             $ref: '#/definitions/types.Response'
       summary: Izmena limita aktuara
+      tags:
+      - Actuaries
+  /actuaries/agents:
+    get:
+      description: Vraća listu svih aktuara iz baze čiji je departman "AGENT".
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešno dobavljeni agenti
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Actuary'
+                  type: array
+              type: object
+        "500":
+          description: Greška u bazi
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Dobavljanje aktuara koji su agenti
       tags:
       - Actuaries
   /actuaries/filter:
@@ -792,6 +881,57 @@ paths:
       summary: Istorijski podaci za forex par u vremenskom opsegu
       tags:
       - Forex
+  /forex/{base}/{quote}/history/{date}:
+    get:
+      description: Preuzima snapshot forex para (cena, ask, bid) za tačno određeni
+        dan.
+      parameters:
+      - description: Osnovna valuta
+        example: EUR
+        in: path
+        name: base
+        required: true
+        type: string
+      - description: Kvotna valuta
+        example: USD
+        in: path
+        name: quote
+        required: true
+        type: string
+      - description: Datum za koji se traži snapshot (YYYY-MM-DD)
+        example: "2025-04-09"
+        format: date
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Snapshot za taj dan
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.ListingHistory'
+              type: object
+        "400":
+          description: Neispravan format datuma
+          schema:
+            $ref: '#/definitions/types.Response'
+        "404":
+          description: Forex par za traženi datum nije pronađen
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška pri preuzimanju podataka iz baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Povrat dnevnog snapshot-a za forex par
+      tags:
+      - Forex
   /future:
     get:
       description: Vraća listu svih listinga koji predstavljaju future ugovore.
@@ -853,6 +993,101 @@ paths:
           schema:
             $ref: '#/definitions/types.Response'
       summary: Preuzimanje future-a po tikeru
+      tags:
+      - Futures
+  /future/{ticker}/history:
+    get:
+      description: Preuzima sve ili opsežne istorijske snapshot podatke za future
+        ticker.
+      parameters:
+      - description: Tiker future-a
+        example: ESZ3
+        in: path
+        name: ticker
+        required: true
+        type: string
+      - description: Početni datum (YYYY-MM-DD)
+        example: "2025-03-01"
+        in: query
+        name: startDate
+        type: string
+      - description: Krajnji datum (YYYY-MM-DD), podrazumevano danas
+        example: "2025-04-09"
+        in: query
+        name: endDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Istorijski podaci za future
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.ListingHistory'
+                  type: array
+              type: object
+        "400":
+          description: Neispravan format datuma
+          schema:
+            $ref: '#/definitions/types.Response'
+        "404":
+          description: Nema istorijskih podataka
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Istorijski podaci za future
+      tags:
+      - Futures
+  /future/{ticker}/history/{date}:
+    get:
+      description: Preuzima snapshot (cenu, ask, bid...) za future ticker na tačno
+        određeni dan.
+      parameters:
+      - description: Tiker future-a
+        example: ESZ3
+        in: path
+        name: ticker
+        required: true
+        type: string
+      - description: Datum snapshot-a (YYYY-MM-DD)
+        example: "2025-04-09"
+        format: date
+        in: path
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Snapshot podaci za traženi datum
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.ListingHistory'
+              type: object
+        "400":
+          description: Neispravan format datuma
+          schema:
+            $ref: '#/definitions/types.Response'
+        "404":
+          description: Podaci nisu pronađeni za dati future ticker i datum
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Povrat snapshot-a za future po datumu
       tags:
       - Futures
   /options/symbol/{symbol}:
@@ -1086,6 +1321,49 @@ paths:
       summary: Odobravanje naloga
       tags:
       - Orders
+  /orders/{id}/cancel:
+    post:
+      description: Menja status naloga u 'cancelled' ukoliko još nije izvršen.
+      parameters:
+      - description: ID naloga koji se otkazuje
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nalog uspešno otkazan
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Nevalidan ID ili nalog je već završen
+          schema:
+            $ref: '#/definitions/types.Response'
+        "403":
+          description: Nedovoljne privilegije (ne može se otkazati tuđi nalog)
+          schema:
+            $ref: '#/definitions/types.Response'
+        "404":
+          description: Nalog sa datim ID-jem ne postoji
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška prilikom otkazivanja naloga
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Otkazivanje naloga
+      tags:
+      - Orders
   /orders/{id}/decline:
     post:
       description: Menja status naloga u 'declined'.
@@ -1126,6 +1404,82 @@ paths:
       security:
       - BearerAuth: []
       summary: Odbijanje naloga
+      tags:
+      - Orders
+  /orders/paged:
+    get:
+      description: Vraća stranicu naloga sa zadatim brojem po stranici i opcionim
+        filtriranjem po statusu.
+      parameters:
+      - default: 1
+        description: Broj stranice (počinje od 1)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Broj naloga po stranici
+        in: query
+        name: size
+        type: integer
+      - description: Status naloga za filtriranje
+        example: pending
+        in: query
+        name: filter_status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešno preuzeta stranica naloga
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/controllers.PaginatedOrders'
+              type: object
+        "500":
+          description: Greška pri preuzimanju naloga iz baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Preuzimanje paginiranih naloga
+      tags:
+      - Orders
+  /profit/{id}:
+    get:
+      description: Računa ukupni ostvareni profit korisnika na osnovu izvršenih transakcija
+        (FIFO).
+      parameters:
+      - description: ID korisnika za kog se računa profit
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Uspešno vraćen obračun profita
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RealizedProfitResponse'
+              type: object
+        "400":
+          description: Nevalidan ID korisnika
+          schema:
+            $ref: '#/definitions/types.Response'
+        "404":
+          description: Korisnik nema transakcija, nije moguće izračunati profit
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Greška prilikom obračuna profita
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Obračun realizovanog profita
       tags:
       - Orders
   /securities:
@@ -1230,6 +1584,31 @@ paths:
       summary: Ažuriranje broja javno oglašenih hartija
       tags:
       - Portfolio
+  /securities/available:
+    get:
+      description: Vraća listu svih hartija od vrednosti koje su trenutno dostupne
+        na tržištu.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista dostupnih hartija od vrednosti
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Security'
+                  type: array
+              type: object
+        "500":
+          description: Greška pri dohvatanju podataka iz baze
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Dohvatanje svih dostupnih hartija
+      tags:
+      - Securities
   /stocks:
     get:
       description: Vraća listu svih listinga koji predstavljaju akcije.

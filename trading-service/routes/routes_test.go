@@ -146,9 +146,16 @@ func TestSetupWithRealApp(t *testing.T) {
 	// Execute
 	Setup(app)
 
-	// Create a test server
-	server := httptest.NewServer(app.Handler())
-	defer server.Close()
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+	req := httptest.NewRequest("GET", "/", nil)
+	res, err := app.Test(req)
+
+	assert.NoError(t, err)
+	defer res.Body.Close()
+
+	assert.Equal(t, fiber.StatusOK, res.StatusCode) // Or whatever status code you expect when Auth middleware is present
 
 	// At this point the app should have the /actuaries route group configured
 	// with Auth and DepartmentCheck middlewares

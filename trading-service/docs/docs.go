@@ -112,6 +112,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/actuaries/agents": {
+            "get": {
+                "description": "Vraća listu svih aktuara iz baze čiji je departman \"AGENT\".",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Actuaries"
+                ],
+                "summary": "Dobavljanje aktuara koji su agenti",
+                "responses": {
+                    "200": {
+                        "description": "Uspešno dobavljeni agenti",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Actuary"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Greška u bazi",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/actuaries/filter": {
             "get": {
                 "description": "Vraća listu aktuara filtriranu po imenu, prezimenu, email-u i/ili poziciji..",
@@ -679,6 +720,83 @@ const docTemplate = `{
                 }
             }
         },
+        "/forex/{base}/{quote}/history/{date}": {
+            "get": {
+                "description": "Preuzima snapshot forex para (cena, ask, bid) za tačno određeni dan.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forex"
+                ],
+                "summary": "Povrat dnevnog snapshot-a za forex par",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "EUR",
+                        "description": "Osnovna valuta",
+                        "name": "base",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "USD",
+                        "description": "Kvotna valuta",
+                        "name": "quote",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-04-09",
+                        "description": "Datum za koji se traži snapshot (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Snapshot za taj dan",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.ListingHistory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Forex par za traženi datum nije pronađen",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška pri preuzimanju podataka iz baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/future": {
             "get": {
                 "description": "Vraća listu svih listinga koji predstavljaju future ugovore.",
@@ -775,6 +893,152 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Interna greška servera pri preuzimanju detalja future-a",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/future/{ticker}/history": {
+            "get": {
+                "description": "Preuzima sve ili opsežne istorijske snapshot podatke za future ticker.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Futures"
+                ],
+                "summary": "Istorijski podaci za future",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "ESZ3",
+                        "description": "Tiker future-a",
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-03-01",
+                        "description": "Početni datum (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-04-09",
+                        "description": "Krajnji datum (YYYY-MM-DD), podrazumevano danas",
+                        "name": "endDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Istorijski podaci za future",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.ListingHistory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Nema istorijskih podataka",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/future/{ticker}/history/{date}": {
+            "get": {
+                "description": "Preuzima snapshot (cenu, ask, bid...) za future ticker na tačno određeni dan.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Futures"
+                ],
+                "summary": "Povrat snapshot-a za future po datumu",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "ESZ3",
+                        "description": "Tiker future-a",
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-04-09",
+                        "description": "Datum snapshot-a (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Snapshot podaci za traženi datum",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.ListingHistory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Podaci nisu pronađeni za dati future ticker i datum",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška baze",
                         "schema": {
                             "$ref": "#/definitions/types.Response"
                         }
@@ -1030,6 +1294,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/orders/paged": {
+            "get": {
+                "description": "Vraća stranicu naloga sa zadatim brojem po stranici i opcionim filtriranjem po statusu.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Preuzimanje paginiranih naloga",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Broj stranice (počinje od 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Broj naloga po stranici",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "pending",
+                        "description": "Status naloga za filtriranje",
+                        "name": "filter_status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uspešno preuzeta stranica naloga",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/controllers.PaginatedOrders"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Greška pri preuzimanju naloga iz baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/orders/{id}": {
             "get": {
                 "description": "Vraća detalje specifičnog naloga na osnovu njegovog jedinstvenog identifikatora (ID).",
@@ -1153,6 +1478,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/orders/{id}/cancel": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menja status naloga u 'cancelled' ukoliko još nije izvršen.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Otkazivanje naloga",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID naloga koji se otkazuje",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nalog uspešno otkazan",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Nevalidan ID ili nalog je već završen",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Nedovoljne privilegije (ne može se otkazati tuđi nalog)",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Nalog sa datim ID-jem ne postoji",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška prilikom otkazivanja naloga",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/orders/{id}/decline": {
             "post": {
                 "security": [
@@ -1223,6 +1621,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/profit/{id}": {
+            "get": {
+                "description": "Računa ukupni ostvareni profit korisnika na osnovu izvršenih transakcija (FIFO).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Obračun realizovanog profita",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID korisnika za kog se računa profit",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Uspešno vraćen obračun profita",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.RealizedProfitResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Nevalidan ID korisnika",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Korisnik nema transakcija, nije moguće izračunati profit",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška prilikom obračuna profita",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/securities": {
             "get": {
                 "description": "Vraća listu svih dostupnih hartija od vrednosti.",
@@ -1257,6 +1714,47 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Interna greška servera pri preuzimanju ili konverziji hartija od vrednosti",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/securities/available": {
+            "get": {
+                "description": "Vraća listu svih hartija od vrednosti koje su trenutno dostupne na tržištu.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Securities"
+                ],
+                "summary": "Dohvatanje svih dostupnih hartija",
+                "responses": {
+                    "200": {
+                        "description": "Lista dostupnih hartija od vrednosti",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Security"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Greška pri dohvatanju podataka iz baze",
                         "schema": {
                             "$ref": "#/definitions/types.Response"
                         }
@@ -1796,13 +2294,27 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.PaginatedOrders": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.OrderResponse"
+                    }
+                },
+                "totalCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "controllers.UpdatePublicCountRequest": {
             "type": "object",
             "properties": {
-                "public": {
+                "portfolio_id": {
                     "type": "integer"
                 },
-                "security_id": {
+                "public": {
                     "type": "integer"
                 }
             }
@@ -1876,6 +2388,9 @@ const docTemplate = `{
                 "last_modified": {
                     "type": "integer"
                 },
+                "portfolio_id": {
+                    "type": "integer"
+                },
                 "price": {
                     "type": "number"
                 },
@@ -1885,6 +2400,9 @@ const docTemplate = `{
                 "public": {
                     "type": "integer"
                 },
+                "securityId": {
+                    "type": "integer"
+                },
                 "symbol": {
                     "type": "string"
                 },
@@ -1892,6 +2410,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RealizedProfitResponse": {
+            "type": "object",
+            "properties": {
+                "per_security": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SecurityProfit"
+                    }
+                },
+                "total_profit": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.SecurityProfit": {
+            "type": "object",
+            "properties": {
+                "profit": {
+                    "type": "number"
+                },
+                "security_id": {
+                    "type": "integer"
+                },
+                "ticker": {
                     "type": "string"
                 }
             }
@@ -1930,6 +2479,9 @@ const docTemplate = `{
                     "description": "Da li orderi agenta trebaju supervizorsko odobrenje",
                     "type": "boolean"
                 },
+                "position": {
+                    "type": "string"
+                },
                 "usedLimit": {
                     "description": "Samo za agente, resetuje se dnevno",
                     "type": "number"
@@ -1960,10 +2512,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "account_id",
-                "aon",
                 "contract_size",
                 "direction",
-                "margin",
                 "quantity",
                 "security_id",
                 "user_id"
@@ -2162,6 +2712,54 @@ const docTemplate = `{
                 },
                 "price": {
                     "type": "number"
+                }
+            }
+        },
+        "types.ListingHistory": {
+            "type": "object",
+            "properties": {
+                "ask": {
+                    "type": "number"
+                },
+                "bid": {
+                    "type": "number"
+                },
+                "contractSize": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "exchange": {
+                    "$ref": "#/definitions/types.Exchange"
+                },
+                "exchangeID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastRefresh": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "snapshotDate": {
+                    "description": "za koji dan je snapshot",
+                    "type": "string"
+                },
+                "subtype": {
+                    "type": "string"
+                },
+                "ticker": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },
