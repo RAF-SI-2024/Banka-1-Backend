@@ -51,3 +51,23 @@ func NewOrderToken(direction string, userID uint, accountID uint, amount float64
 
 	return tokenString, nil
 }
+
+func NewOrderTokenDirect(uid string, buyerAccountId uint, sellerAccountId uint, amount float64) (string, error) {
+	key, err := getSigningKey()
+	if err != nil {
+		return "", err
+	}
+
+	tokenString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid":             uid,
+		"buyerAccountId":  buyerAccountId,
+		"sellerAccountId": sellerAccountId,
+		"amount":          fmt.Sprintf("%f", amount),
+	}).SignedString(key)
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}

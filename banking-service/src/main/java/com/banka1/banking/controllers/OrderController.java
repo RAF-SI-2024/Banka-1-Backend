@@ -1,5 +1,6 @@
 package com.banka1.banking.controllers;
 
+import com.banka1.banking.dto.OrderTransactionInitiationDTO;
 import com.banka1.banking.models.Account;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.services.AccountService;
@@ -49,4 +50,29 @@ public class OrderController {
             return ResponseTemplate.create(ResponseEntity.status(HttpStatus.BAD_REQUEST), false, null, "Nevalidni podaci");
         }
     }
+
+    @PostMapping("/initiate/{token}")
+    public ResponseEntity<?> initiateOrderTransaction(@PathVariable String token) {
+        Claims claims = authService.parseToken(token);
+        try {
+            String uid = claims.get("uid", String.class);
+            Long buyerAccountId = Long.valueOf(claims.get("buyerAccountId", Integer.class));
+            Long sellerAccountId = Long.valueOf(claims.get("sellerAccountId", Integer.class));
+            Double amount = Double.valueOf(claims.get("amount", String.class));
+
+            OrderTransactionInitiationDTO dto = new OrderTransactionInitiationDTO();
+            dto.setUid(uid);
+            dto.setBuyerAccountId(buyerAccountId);
+            dto.setSellerAccountId(sellerAccountId);
+            dto.setAmount(amount);
+
+            orderService.processOrderTransaction(dto);
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nevalidni podaci u tokenu za initiate transakciju");
+        }
+    }
+
 }

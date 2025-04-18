@@ -1,5 +1,6 @@
 package com.banka1.banking.repository;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.helper.AccountStatus;
 import com.banka1.banking.models.helper.AccountType;
 import com.banka1.banking.models.helper.CurrencyType;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +12,8 @@ import java.util.List;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
-     List<Account> findByOwnerID(Long ownerId);
+    List<Account> findByOwnerID(Long ownerId);
+    List<Account> findByOwnerIDAndStatusNot(Long ownerId, AccountStatus status);
     Optional<Account> findById(Long accountId);
     boolean existsByOwnerID(Long checkId);
     boolean existsByAccountNumber(@NotBlank @Size(min = 2, max = 30) String accountNumber);

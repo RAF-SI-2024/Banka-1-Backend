@@ -1,6 +1,7 @@
 package orders
 
 import (
+	"banka1.com/broker"
 	"fmt"
 	"log"
 	"time"
@@ -160,6 +161,26 @@ func CreateInitialSellOrdersFromBank() {
 		return
 	}
 
+	// Dohvatanje računa banke
+	sellerAccounts, err := broker.GetAccountsForUser(int64(BankUserId))
+	if err != nil {
+		log.Printf("[GRESKA] Nije moguće dohvatiti naloge za BankUserId %d: %v", BankUserId, err)
+		return
+	}
+
+	var bankAccountId uint
+	for _, acc := range sellerAccounts {
+		if acc.CurrencyType == "RSD" {
+			bankAccountId = uint(acc.ID)
+			break
+		}
+	}
+
+	if bankAccountId == 0 {
+		log.Printf("[GRESKA] Nije pronađen RSD account za BankUserId %d", BankUserId)
+		return
+	}
+
 	for _, sec := range securities {
 		if sec.Ticker == "MSFT" {
 			log.Printf("Preskačem SELL ordere za MSFT zbog testiranja\n")
@@ -182,6 +203,7 @@ func CreateInitialSellOrdersFromBank() {
 
 			order := types.Order{
 				UserID:         BankUserId,
+				AccountID:      bankAccountId,
 				SecurityID:     sec.ID,
 				Direction:      "sell",
 				OrderType:      ot,
@@ -209,7 +231,7 @@ func CreateInitialSellOrdersFromBank() {
 				p = types.Portfolio{
 					UserID:     BankUserId,
 					SecurityID: sec.ID,
-					Quantity:   InitialQuantity * len(orderTypes), // jer ima više ordera
+					Quantity:   InitialQuantity * len(orderTypes),
 				}
 				_ = db.DB.Create(&p)
 			}

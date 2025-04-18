@@ -148,7 +148,7 @@ public class AccountService {
     }
 
     public List<Account> getAccountsByOwnerId(Long ownerId) {
-        return accountRepository.findByOwnerID(ownerId);
+        return accountRepository.findByOwnerIDAndStatusNot(ownerId, AccountStatus.CLOSED);
     }
 
     public Account findById(Long accountId) {

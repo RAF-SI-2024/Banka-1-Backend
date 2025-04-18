@@ -671,6 +671,83 @@
                 }
             }
         },
+        "/forex/{base}/{quote}/history/{date}": {
+            "get": {
+                "description": "Preuzima snapshot forex para (cena, ask, bid) za tačno određeni dan.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forex"
+                ],
+                "summary": "Povrat dnevnog snapshot-a za forex par",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "EUR",
+                        "description": "Osnovna valuta",
+                        "name": "base",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "USD",
+                        "description": "Kvotna valuta",
+                        "name": "quote",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-04-09",
+                        "description": "Datum za koji se traži snapshot (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Snapshot za taj dan",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.ListingHistory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Forex par za traženi datum nije pronađen",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška pri preuzimanju podataka iz baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/future": {
             "get": {
                 "description": "Vraća listu svih listinga koji predstavljaju future ugovore.",
@@ -767,6 +844,152 @@
                     },
                     "500": {
                         "description": "Interna greška servera pri preuzimanju detalja future-a",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/future/{ticker}/history": {
+            "get": {
+                "description": "Preuzima sve ili opsežne istorijske snapshot podatke za future ticker.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Futures"
+                ],
+                "summary": "Istorijski podaci za future",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "ESZ3",
+                        "description": "Tiker future-a",
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-03-01",
+                        "description": "Početni datum (YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2025-04-09",
+                        "description": "Krajnji datum (YYYY-MM-DD), podrazumevano danas",
+                        "name": "endDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Istorijski podaci za future",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.ListingHistory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Nema istorijskih podataka",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška baze",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/future/{ticker}/history/{date}": {
+            "get": {
+                "description": "Preuzima snapshot (cenu, ask, bid...) za future ticker na tačno određeni dan.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Futures"
+                ],
+                "summary": "Povrat snapshot-a za future po datumu",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "ESZ3",
+                        "description": "Tiker future-a",
+                        "name": "ticker",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-04-09",
+                        "description": "Datum snapshot-a (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Snapshot podaci za traženi datum",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.ListingHistory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Neispravan format datuma",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Podaci nisu pronađeni za dati future ticker i datum",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Greška baze",
                         "schema": {
                             "$ref": "#/definitions/types.Response"
                         }
@@ -1952,10 +2175,8 @@
             "type": "object",
             "required": [
                 "account_id",
-                "aon",
                 "contract_size",
                 "direction",
-                "margin",
                 "quantity",
                 "security_id",
                 "user_id"
@@ -2154,6 +2375,54 @@
                 },
                 "price": {
                     "type": "number"
+                }
+            }
+        },
+        "types.ListingHistory": {
+            "type": "object",
+            "properties": {
+                "ask": {
+                    "type": "number"
+                },
+                "bid": {
+                    "type": "number"
+                },
+                "contractSize": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "exchange": {
+                    "$ref": "#/definitions/types.Exchange"
+                },
+                "exchangeID": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastRefresh": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "snapshotDate": {
+                    "description": "za koji dan je snapshot",
+                    "type": "string"
+                },
+                "subtype": {
+                    "type": "string"
+                },
+                "ticker": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

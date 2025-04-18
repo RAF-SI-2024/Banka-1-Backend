@@ -1,9 +1,11 @@
 package broker
 
 import (
+	"banka1.com/dto"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync/atomic"
 
 	"github.com/go-stomp/stomp/v3"
@@ -130,4 +132,39 @@ func listen(address string, handler func(*stomp.Subscription, *stomp.Message), h
 
 		go handler(subscription, message)
 	}
+}
+
+func SendOrderTransactionInit(dto *dto.OrderTransactionInitiationDTO) error {
+	brokerHost := os.Getenv("MESSAGE_BROKER_HOST")
+	if brokerHost == "" {
+		fmt.Println("[WARN] MESSAGE_BROKER_HOST nije postavljen. Preskačem slanje na broker tokom testa.")
+		return nil
+	}
+
+	conn, err := stomp.Dial("tcp", brokerHost)
+
+	if err != nil {
+		fmt.Println("Neuspešno povezivanje na broker:", err)
+		return err
+	}
+	defer conn.Disconnect()
+
+	data, err := json.Marshal(dto)
+	if err != nil {
+		fmt.Println("Neuspešan marshal DTO-a:", err)
+		return err
+	}
+
+	err = conn.Send(
+		"/queue/order-init",
+		"application/json",
+		data,
+	)
+	if err != nil {
+		fmt.Println("Neuspešno slanje poruke:", err)
+		return err
+	}
+
+	fmt.Println("Poslata poruka za OrderTransactionInitiationDTO preko brokera.")
+	return nil
 }

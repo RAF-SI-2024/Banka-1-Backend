@@ -38,7 +38,8 @@ func TestRunTax(t *testing.T) {
 func TestGetAggregatedTaxForUser_InvalidUserID(t *testing.T) {
 	// Setup
 	app := fiber.New()
-	app.Get("/tax/dashboard/:userID", GetAggregatedTaxForUser)
+	taxController := NewTaxController()
+	app.Get("/tax/dashboard/:userID", taxController.GetAggregatedTaxForUser)
 
 	// Test case: Invalid user ID (not a number)
 	req := httptest.NewRequest(http.MethodGet, "/tax/dashboard/invalid", nil)

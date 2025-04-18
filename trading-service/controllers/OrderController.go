@@ -3,6 +3,7 @@ package controllers
 import (
 	"banka1.com/controllers/orders"
 	"banka1.com/db"
+	"banka1.com/dto"
 	"banka1.com/middlewares"
 	"banka1.com/services"
 	"banka1.com/types"
@@ -626,6 +627,46 @@ func (oc *OrderController) GetRealizedProfit(c *fiber.Ctx) error {
 	})
 }
 
+// InitiateOrderTransaction godoc
+//
+//	@Summary		Iniciranje transakcije za nalog
+//	@Description	Pokreće inicijalizaciju transfera novca između naloga za izvršavanje matched ordera.
+//	@Tags			Orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			OrderTransactionInitiationDTO	body	dto.OrderTransactionInitiationDTO	true	"Podaci o inicijalizaciji transakcije"
+//	@Success		200	{string}	string	"Uspešno inicirana transakcija"
+//	@Failure		400	{object}	types.Response	"Nevalidan zahtev"
+//	@Failure		500	{object}	types.Response	"Interna greška servera"
+//	@Router			/orders/initiate-transaction [post]
+func (oc *OrderController) InitiateOrderTransaction(c *fiber.Ctx) error {
+	initDto := new(dto.OrderTransactionInitiationDTO)
+	if err := c.BodyParser(initDto); err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	token, err := middlewares.NewOrderTokenDirect(
+		initDto.Uid,
+		initDto.BuyerAccountId,
+		initDto.SellerAccountId,
+		initDto.Amount,
+	)
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	url := os.Getenv("BANKING_SERVICE") + "/order/initiate/" + token
+
+	agent := fiber.Post(url)
+	statusCode, _, errs := agent.Bytes()
+
+	if len(errs) != 0 || statusCode != 200 {
+		return fiber.ErrInternalServerError
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func InitOrderRoutes(app *fiber.App) {
 	orderController := NewOrderController()
 
@@ -637,4 +678,5 @@ func InitOrderRoutes(app *fiber.App) {
 	app.Post("/orders/:id/approve", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), orderController.ApproveOrder)
 	app.Post("/orders/:id/cancel", middlewares.Auth, orderController.CancelOrder)
 	app.Get("/profit/:id", orderController.GetRealizedProfit)
+	app.Post("/orders/initiate-transaction", orderController.InitiateOrderTransaction)
 }

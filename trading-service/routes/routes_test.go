@@ -144,7 +144,7 @@ func TestSetupWithRealApp(t *testing.T) {
 	app := fiber.New()
 
 	// Execute
-	Setup(app)
+	SetupRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
@@ -165,7 +165,7 @@ func TestSetupWithRealApp(t *testing.T) {
 	// that the function completes without errors
 
 	assert.NotPanics(t, func() {
-		Setup(app)
+		SetupRoutes(app)
 	}, "Setup should not panic")
 }
 

@@ -1,13 +1,12 @@
 package orders
 
 import (
-	"banka1.com/middlewares"
+	"banka1.com/broker"
+	"banka1.com/dto"
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"math/rand"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -294,6 +293,11 @@ func executePartial(order types.Order, price float64, tx *gorm.DB) int {
 		return 0
 	}
 
+	if match.AccountID == 0 {
+		fmt.Println("Matchovani order ima account_id = 0, preskačem ga...")
+		return 0
+	}
+
 	if match.AON {
 		if match.RemainingParts == nil || order.RemainingParts == nil {
 			fmt.Println("AON match bez remaining parts")
@@ -349,21 +353,23 @@ func executePartial(order types.Order, price float64, tx *gorm.DB) int {
 		return 0
 	}
 
+	uid := fmt.Sprintf("ORDER-match-%d-%d", order.ID, time.Now().Unix())
 	total := price * float64(matchQty)
 	fee := CalculateFee(order, total)
-	token, err := middlewares.NewOrderToken(order.Direction, order.UserID, order.AccountID, price, fee)
-	if err != nil {
-		fmt.Printf("Greška pri pravljenju tokena za izvršenje ordera %d: %v\n", order.ID, err)
-		return 0
+	initiationDto := dto.OrderTransactionInitiationDTO{
+		Uid:             uid,
+		SellerAccountId: getSellerAccountID(order, match),
+		BuyerAccountId:  getBuyerAccountID(order, match),
+		Amount:          total,
+		Fee:             fee,
+		Direction:       order.Direction,
 	}
 
-	url := fmt.Sprintf("%s/orders/execute/%s", os.Getenv("BANKING_SERVICE"), token)
+	fmt.Println("Šaljem OrderTransactionInitiationDTO preko brokera...")
 
-	agent := fiber.Post(url)
-	statusCode, _, errs := agent.Bytes()
-
-	if len(errs) != 0 || statusCode != 200 {
-		fmt.Printf("Skidanje novca nije uspelo za order %d. Status: %d, Greške: %v\n", order.ID, statusCode, errs)
+	err := broker.SendOrderTransactionInit(&initiationDto)
+	if err != nil {
+		fmt.Printf("Greska pri slanju OrderTransactionInitiationDTO preko brokera: %v\n", err)
 		tx.Rollback()
 		return 0
 	}
@@ -640,4 +646,18 @@ func UpdateAvailableVolumeTx(tx *gorm.DB, securityID uint) error {
 	return tx.Model(&types.Security{}).
 		Where("id = ?", securityID).
 		Update("volume", final).Error
+}
+
+func getBuyerAccountID(a, b types.Order) uint {
+	if strings.ToLower(a.Direction) == "buy" {
+		return a.AccountID
+	}
+	return b.AccountID
+}
+
+func getSellerAccountID(a, b types.Order) uint {
+	if strings.ToLower(a.Direction) == "sell" {
+		return a.AccountID
+	}
+	return b.AccountID
 }

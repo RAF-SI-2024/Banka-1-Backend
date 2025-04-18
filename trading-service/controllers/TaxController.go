@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"banka1.com/db"
@@ -156,7 +157,7 @@ func (tc *TaxController) RunTax(c *fiber.Ctx) error {
 //	@Failure		400		{object}	types.Response									"Neispravan ID korisnika (nije validan broj ili <= 0)"
 //	@Failure		500		{object}	types.Response									"Interna greška servera pri dohvatanju podataka iz baze"
 //	@Router			/tax/dashboard/{userID} [get]
-func GetAggregatedTaxForUser(c *fiber.Ctx) error {
+func (tc *TaxController) GetAggregatedTaxForUser(c *fiber.Ctx) error {
 	userID, err := c.ParamsInt("userID")
 	if err != nil || userID <= 0 {
 		return c.Status(400).JSON(types.Response{
@@ -165,51 +166,36 @@ func GetAggregatedTaxForUser(c *fiber.Ctx) error {
 		})
 	}
 
-	now := time.Now()
-	currentYear := now.Year()
-	currentMonth := int(now.Month())
-
-	startOfYear := time.Date(currentYear, time.January, 1, 0, 0, 0, 0, time.UTC)
-	startOfNextYear := time.Date(currentYear+1, time.January, 1, 0, 0, 0, 0, time.UTC)
-	startOfYearTs := startOfYear.Unix()
-	startOfNextYearTs := startOfNextYear.Unix()
-
-	startOfMonth := time.Date(currentYear, time.Month(currentMonth), 1, 0, 0, 0, 0, time.UTC) // Use integer month
-	startOfNextMonth := startOfMonth.AddDate(0, 1, 0)
-	startOfMonthTs := startOfMonth.Unix()
-	startOfNextMonthTs := startOfNextMonth.Unix()
+	year := time.Now().Format("2006")
+	yearMonth := time.Now().Format("2006-01")
 
 	var paid float64
-	errPaid := db.DB.Raw(`
-		SELECT COALESCE(SUM(tax_amount), 0) 
+	err = db.DB.Raw(`
+		SELECT COALESCE(SUM(tax_amount), 0)
 		FROM tax
-		WHERE is_paid = TRUE  
-		  AND user_id = ? 
-		  AND created_at >= ? 
-		  AND created_at < ? 
-	`, userID, startOfYearTs, startOfNextYearTs).Scan(&paid).Error
+		WHERE is_paid = 1 AND user_id = ? AND substr(month_year, 1, 4) = ?
+	`, userID, year).Scan(&paid).Error
 
-	if errPaid != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
+	if err != nil {
+		log.Printf("Greška pri dohvatanju plaćenog poreza za user-a %d: %v", userID, err)
+		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Greška pri dohvatanju plaćenog poreza.",
+			Error:   "Greška pri čitanju podataka iz baze",
 		})
 	}
 
 	var unpaid float64
-	errUnpaid := db.DB.Raw(`
+	err = db.DB.Raw(`
 		SELECT COALESCE(SUM(tax_amount), 0)
 		FROM tax
-		WHERE is_paid = FALSE 
-		  AND user_id = ? 
-		  AND created_at >= ? 
-		  AND created_at < ?
-	`, userID, startOfMonthTs, startOfNextMonthTs).Scan(&unpaid).Error
+		WHERE is_paid = 0 AND user_id = ? AND month_year = ?
+	`, userID, yearMonth).Scan(&unpaid).Error
 
-	if errUnpaid != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(types.Response{
+	if err != nil {
+		log.Printf("Greška pri dohvatanju neplaćenog poreza za user-a %d: %v", userID, err)
+		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Greška pri dohvatanju neplaćenog poreza.",
+			Error:   "Greška pri čitanju podataka iz baze",
 		})
 	}
 
@@ -238,5 +224,5 @@ func InitTaxRoutes(app *fiber.App) {
 
 	app.Get("/tax", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.GetTaxForAllUsers)
 	app.Post("/tax/run", middlewares.Auth, middlewares.DepartmentCheck("SUPERVISOR"), taxController.RunTax)
-	app.Get("/tax/dashboard/:userID", middlewares.Auth, GetAggregatedTaxForUser)
+	app.Get("/tax/dashboard/:userID", middlewares.Auth, taxController.GetAggregatedTaxForUser)
 }
