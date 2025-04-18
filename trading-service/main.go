@@ -41,6 +41,7 @@ import (
 // @description				Unesite token. Primer: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 func main() {
 	err := godotenv.Load()
+	fmt.Println("Do not merge this")
 	if err != nil {
 		panic("Error loading .env file")
 	}
