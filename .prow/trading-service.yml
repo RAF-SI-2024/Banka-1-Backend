@@ -50,7 +50,7 @@ presubmits:
               # pokrenete sve potrebe dependency-e (npr. baze podataka i vaše druge
               # mikroservise).
               start-docker.sh
-
+              sleep 3600
               # PROMENITI PRI KOPIRANJU
               # Ovde treba da pokrenete sve mikroservise i dependency-e koji vam trebaju
               # za integracione i end to end testove (npr. baze podataka i vaše druge
