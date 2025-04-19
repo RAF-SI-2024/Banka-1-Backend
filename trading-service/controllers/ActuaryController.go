@@ -81,6 +81,13 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 
 	// Početak transakcije
 	tx := db.DB.Begin()
+	if tx.Error != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Greška pri započinjanju transakcije.",
+			Data:    nil,
+		})
+	}
 
 	actuary := types.Actuary{
 		UserID:       actuaryDTO.UserID,
@@ -100,7 +107,13 @@ func (ac *ActuaryController) CreateActuary(c *fiber.Ctx) error {
 	}
 
 	// Commit transakcije
-	tx.Commit()
+	if err := tx.Commit().Error; err != nil {
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Error:   "Greška pri potvrđivanju transakcije.",
+			Data:    nil,
+		})
+	}
 
 	response := types.Response{
 		Success: true,
@@ -154,17 +167,17 @@ func (ac *ActuaryController) GetAllActuariesDB(c *fiber.Ctx) error {
 		log.Infof("Database error: %v\n", result.Error)
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Database error",
+			Error:   "Greška pri pristupu bazi podataka.",
 		})
 	}
 
-	// Opcionalno: ako ne postoji ni jedan actuary, možemo vratiti 404 (Not Found)
-	if len(actuaries) == 0 {
-		return c.Status(404).JSON(types.Response{
-			Success: false,
-			Error:   "No actuaries found",
-		})
-	}
+	//// Opcionalno: ako ne postoji ni jedan actuary, možemo vratiti 404 (Not Found)
+	//if len(actuaries) == 0 {
+	//	return c.Status(404).JSON(types.Response{
+	//		Success: false,
+	//		Error:   "Aktuari nisu pronadjeni",
+	//	})
+	//}
 
 	return c.JSON(types.Response{
 		Success: true,
@@ -190,16 +203,16 @@ func (ac *ActuaryController) GetAllActuaryAgentsDB(c *fiber.Ctx) error {
 		log.Infof("Database error: %v\n", result.Error)
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Database error",
+			Error:   "Greška pri pristupu bazi podataka.",
 		})
 	}
 
-	if len(agents) == 0 {
-		return c.Status(404).JSON(types.Response{
-			Success: false,
-			Error:   "No actuary agents found",
-		})
-	}
+	//if len(agents) == 0 {
+	//	return c.Status(404).JSON(types.Response{
+	//		Success: false,
+	//		Error:   "No actuary agents found",
+	//	})
+	//}
 
 	return c.JSON(types.Response{
 		Success: true,
@@ -221,20 +234,22 @@ func (ac *ActuaryController) GetAllActuaryAgentsDB(c *fiber.Ctx) error {
 //	@Router			/actuaries/{ID} [get]
 func (ac *ActuaryController) GetActuaryByID(c *fiber.Ctx) error {
 	id := c.Params("id") // Uzima ID iz URL-a
+	if id == "" {
+		log.Error("GetActuaryByID: ID not provided")
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Error:   "ID nije prosleđen.",
+			Data:    nil,
+		})
+	}
 
 	var actuary types.Actuary
 	result := db.DB.First(&actuary, id)
-	if result.Error != nil {
-		//if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		//	return c.Status(404).JSON(types.Response{
-		//		Success: false,
-		//		Error:   "Actuary not found",
-		//	})
-		//}
-		log.Infof("Database error: GetActuaryByID  %v\n", result.Error)
-		return c.Status(500).JSON(types.Response{
+	if err := result.Error; err != nil {
+		return c.Status(404).JSON(types.Response{
 			Success: false,
-			Error:   "Database error",
+			Data:    nil,
+			Error:   "Aktuar nije pronadjen",
 		})
 	}
 
@@ -262,7 +277,24 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 	id := c.Params("ID")
 	var actuary types.Actuary
 
-	result := db.DB.First(&actuary, id)
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		log.Errorf("ChangeAgentLimits: greška pri započinjanju transakcije: %v", tx.Error)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri započinjanju transakcije.",
+		})
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Errorf("ChangeAgentLimits: panic oporavljen: %v", r)
+		}
+	}()
+
+	result := tx.First(&actuary, id)
 	if result.Error != nil {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
@@ -286,7 +318,7 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 			return c.Status(400).JSON(types.Response{
 				Success: false,
 				Data:    nil,
-				Error:   "Neispravan format podataka",
+				Error:   "Neispravan format limita",
 			})
 		}
 		actuary.LimitAmount = float
@@ -296,7 +328,24 @@ func (ac *ActuaryController) ChangeAgentLimits(c *fiber.Ctx) error {
 		actuary.UsedLimit = 0
 	}
 
-	db.DB.Save(&actuary)
+	if err := tx.Save(&actuary).Error; err != nil {
+		tx.Rollback()
+		log.Errorf("ChangeAgentLimits: greška pri čuvanju aktuara: %v", err)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri ažuriranju aktuara.",
+		})
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Errorf("ChangeAgentLimits: greška pri potvrdi transakcije: %v", err)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri potvrđivanju promena.",
+		})
+	}
 
 	return c.JSON(types.Response{
 		Success: true,
@@ -403,7 +452,7 @@ func (ac *ActuaryController) FilterActuariesDB(c *fiber.Ctx) error {
 		log.Infof("Database error: GetFilteredActuaries  %v\n", result.Error)
 		return c.Status(500).JSON(types.Response{
 			Success: false,
-			Error:   "Database error",
+			Error:   "Greška pri pretrazi aktura.",
 		})
 	}
 
@@ -418,7 +467,24 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 	id := c.Params("ID")
 	var actuary types.Actuary
 
-	result := db.DB.First(&actuary, id)
+	tx := db.DB.Begin()
+	if tx.Error != nil {
+		log.Errorf("ResetActuaryLimit: greška pri započinjanju transakcije: %v", tx.Error)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri započinjanju transakcije.",
+		})
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Errorf("ResetActuaryLimit: panic oporavljen: %v", r)
+		}
+	}()
+
+	result := tx.First(&actuary, id)
 	if result.Error != nil {
 		return c.Status(404).JSON(types.Response{
 			Success: false,
@@ -428,7 +494,24 @@ func (ac *ActuaryController) ResetActuaryLimit(c *fiber.Ctx) error {
 	}
 	actuary.UsedLimit = 0
 
-	db.DB.Save(&actuary)
+	if err := tx.Save(&actuary).Error; err != nil {
+		tx.Rollback()
+		log.Errorf("ResetActuaryLimit: greška pri čuvanju aktuara: %v", err)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri resetovanju limita.",
+		})
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Errorf("ResetActuaryLimit: greška pri potvrdi transakcije: %v", err)
+		return c.Status(500).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Greška pri potvrđivanju promena.",
+		})
+	}
 
 	return c.JSON(types.Response{
 		Success: true,
@@ -492,6 +575,7 @@ func (ac *ActuaryController) GetActuaryProfits(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(types.Response{
 			Success: false,
+			Data:    nil,
 			Error:   "Greška pri sabiranju profita: " + err.Error(),
 		})
 	}

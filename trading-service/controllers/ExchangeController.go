@@ -3,7 +3,10 @@ package controllers
 import (
 	"banka1.com/db"
 	"banka1.com/types"
+	"errors"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+	"strconv"
 )
 
 type ExchangeController struct {
@@ -69,18 +72,32 @@ func (ec *ExchangeController) GetExchangeByID(c *fiber.Ctx) error {
 		ID is a unique identifier for the exchange.
 		ID is assigned in the code and is not in the exchamges.csv data.
 	*/
-	id := c.Params("id")
+	idParam := c.Params("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(400).JSON(types.Response{
+			Success: false,
+			Data:    nil,
+			Error:   "Neispravan format ID-ja",
+		})
+	}
 
 	var exchange types.Exchange
 
 	if result := db.DB.First(&exchange, id); result.Error != nil {
-		return c.Status(404).JSON(types.Response{
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return c.Status(404).JSON(types.Response{
+				Success: false,
+				Data:    nil,
+				Error:   "Berza sa datim ID-jem nije pronađena",
+			})
+		}
+		return c.Status(500).JSON(types.Response{
 			Success: false,
 			Data:    nil,
-			Error:   "ExchangeMic not found with ID: " + id,
+			Error:   "Greška pri preuzimanju berze: " + result.Error.Error(),
 		})
 	}
-
 	return c.JSON(types.Response{
 		Success: true,
 		Data:    exchange,
