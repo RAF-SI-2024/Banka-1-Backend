@@ -803,7 +803,44 @@ public class TransferService {
         return transferRepository.saveAndFlush(transfer);
     }
 
+    public Transfer createForeignBankMoneyTransferEntity(Account fromAccount, String foreignBankAccount, MoneyTransferDTO moneyTransferDTO) {
+        Currency fromCurrency = currencyRepository.findByCode(fromAccount.getCurrencyType())
+                .orElseThrow(() -> new IllegalArgumentException("Greska"));
+
+        Long customerId = fromAccount.getOwnerID();
+        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+
+        if (customerData == null ) {
+            throw new IllegalArgumentException("Korisnik nije pronađen");
+        }
+
+        Transfer transfer = new Transfer();
+        transfer.setFromAccountId(fromAccount);
+        transfer.setToAccountId(null);
+        transfer.setAmount(moneyTransferDTO.getAmount());
+        transfer.setReceiver(moneyTransferDTO.getReceiver());
+        transfer.setAdress(moneyTransferDTO.getAdress() != null ? moneyTransferDTO.getAdress() : "N/A");
+        transfer.setStatus(TransferStatus.PENDING);
+        transfer.setType(TransferType.FOREIGN_BANK);
+        transfer.setFromCurrency(fromCurrency);
+        transfer.setToCurrency(fromCurrency);
+        transfer.setPaymentCode(moneyTransferDTO.getPayementCode());
+        transfer.setPaymentReference(moneyTransferDTO.getPayementReference() != null ? moneyTransferDTO.getPayementReference() : "N/A");
+        transfer.setPaymentDescription(moneyTransferDTO.getPayementDescription());
+        transfer.setCreatedAt(System.currentTimeMillis());
+        transfer.setNote(foreignBankAccount);
+
+        transfer.setSavedReceiverId(moneyTransferDTO.getSavedReceiverId());
+
+        return transferRepository.saveAndFlush(transfer);
+    }
+
     public Long createMoneyTransfer(MoneyTransferDTO moneyTransferDTO){
+
+        // if moneyTransferDTO.getRecipientAccount() starts with 444 then it payment to the other bank
+        if (moneyTransferDTO.getRecipientAccount().startsWith("444")) {
+            return createForeignBankTransfer(moneyTransferDTO);
+        }
 
         Optional<Account> fromAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getFromAccountNumber());
         Optional<Account> toAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getRecipientAccount());
@@ -855,6 +892,57 @@ public class TransferService {
 
         }
         return null;
+    }
+
+    public Long createForeignBankTransfer(MoneyTransferDTO moneyTransferDTO) {
+        Optional<Account> fromAccountOtp = accountRepository.findByAccountNumber(moneyTransferDTO.getFromAccountNumber());
+
+        if (!fromAccountOtp.isPresent()){
+            throw new IllegalArgumentException("Račun nije pronađen");
+        }
+
+        Account fromAccount = fromAccountOtp.get();
+
+        Long customerId = fromAccount.getOwnerID();
+        CustomerDTO customerData = userServiceCustomer.getCustomerById(customerId);
+
+        if (customerData == null ) {
+            throw new IllegalArgumentException("Korisnik nije pronađen");
+        }
+
+        String email = customerData.getEmail();
+        String firstName = customerData.getFirstName();
+        String lastName = customerData.getLastName();
+
+        var transfer = createForeignBankMoneyTransferEntity(fromAccount, moneyTransferDTO.getRecipientAccount(), moneyTransferDTO);
+
+        String otpCode = otpTokenService.generateOtp(transfer.getId());
+        transfer.setOtp(otpCode);
+        transferRepository.save(transfer);
+
+        NotificationDTO emailDto = new NotificationDTO();
+        emailDto.setSubject("Verifikacija");
+        emailDto.setEmail(email);
+        emailDto.setMessage("Vaš verifikacioni kod je: " + otpCode);
+        emailDto.setFirstName(firstName);
+        emailDto.setLastName(lastName);
+        emailDto.setType("email");
+
+        NotificationDTO pushNotification = new NotificationDTO();
+        pushNotification.setSubject("Verifikacija");
+        pushNotification.setMessage("Kliknite kako biste verifikovali transfer");
+        pushNotification.setFirstName(firstName);
+        pushNotification.setLastName(lastName);
+        pushNotification.setEmail(email);
+        pushNotification.setType("firebase");
+        Map<String, String> data = Map.of("transferId", transfer.getId().toString(), "otp", otpCode);
+        pushNotification.setAdditionalData(data);
+
+        jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(emailDto));
+        jmsTemplate.convertAndSend(destinationEmail,messageHelper.createTextMessage(pushNotification));
+
+        return transfer.getId();
+
     }
 
     @Scheduled(fixedRate = 10000)

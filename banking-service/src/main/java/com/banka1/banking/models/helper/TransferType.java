@@ -4,5 +4,6 @@ public enum TransferType {
     INTERNAL,
     EXTERNAL,
     EXCHANGE,
-    FOREIGN
+    FOREIGN,
+    FOREIGN_BANK,
 }

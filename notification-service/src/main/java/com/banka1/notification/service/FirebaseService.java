@@ -19,7 +19,8 @@ public class FirebaseService {
     }
 
     public void sendNotificationToCustomer(String title, String body, Long customerId, Map<String, String> data) {
-        customerDeviceRepository.findByCustomerId(customerId).forEach(customerDevice -> sendNotification(title, body, customerDevice.getDeviceToken(), data));
+        sendNotification(title, body, "cE7XtQeg3UIfaoaazt-6ZX:APA91bEYirqxWJwe6g5fUTD1Z_YoEITHOgh3HHqPiEEOJR8rJcVOrSKcG-NLupDm-afYcuIu67xN9yl_VymQUHTI-3CteStDiigRS2BSWcZKPG_v9d9xDFo", data);
+//        customerDeviceRepository.findByCustomerId(customerId).forEach(customerDevice -> sendNotification(title, body, customerDevice.getDeviceToken(), data));
     }
 
     public void broadcastNotification(String title, String body, Map<String, String> data) {
