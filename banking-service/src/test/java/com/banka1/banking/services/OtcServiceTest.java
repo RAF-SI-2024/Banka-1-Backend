@@ -2,12 +2,17 @@ package com.banka1.banking.services;
 
 
 
+import com.banka1.banking.dto.CustomerDTO;
 import com.banka1.banking.dto.OTCTransactionACKDTO;
 import com.banka1.banking.models.Account;
+import com.banka1.banking.models.Currency;
+import com.banka1.banking.models.Transfer;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.repository.AccountRepository;
 import com.banka1.banking.models.OTCTransaction;
+import com.banka1.banking.repository.CurrencyRepository;
 import com.banka1.banking.repository.OTCTransactionRepository;
+import com.banka1.banking.repository.TransactionRepository;
 import com.banka1.common.listener.MessageHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,10 +35,22 @@ public class OtcServiceTest {
     private JmsTemplate jmsTemplate;
 
     @Mock
+    private UserServiceCustomer userServiceCustomer;
+
+    @Mock
     private MessageHelper messageHelper;
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private CurrencyRepository currencyRepository;
+
+    @Mock
+    private TransferService transferService;
+
+    @Mock
+    private TransactionRepository transactionRepository;
 
     @Mock
     private OTCTransactionRepository otcTransactionRepository;
@@ -209,6 +226,9 @@ public class OtcServiceTest {
 
         when(accountRepository.findById(1L)).thenReturn(Optional.of(from));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(to));
+        when(userServiceCustomer.getCustomerById(any())).thenReturn(new CustomerDTO());
+        when(currencyRepository.getByCode(any())).thenReturn(new Currency());
+        when(transferService.createMoneyTransferEntity(eq(from), eq(to), any())).thenReturn(new Transfer());
 
         otcService.payPremium(1L, 2L, 100.0);
 

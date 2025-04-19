@@ -1544,7 +1544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/securities/{id}/public-count": {
+        "/securities/public-count": {
             "put": {
                 "description": "Menja broj hartija koje su označene kao javne u portfoliju korisnika.",
                 "consumes": [
@@ -1558,13 +1558,6 @@ const docTemplate = `{
                 ],
                 "summary": "Ažuriranje broja javno oglašenih hartija",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "description": "Podaci za ažuriranje",
                         "name": "body",
@@ -2025,7 +2018,7 @@ const docTemplate = `{
                 "public": {
                     "type": "integer"
                 },
-                "security_id": {
+                "portfolio_id": {
                     "type": "integer"
                 }
             }

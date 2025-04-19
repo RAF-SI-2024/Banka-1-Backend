@@ -4,6 +4,7 @@ import com.banka1.banking.dto.CreateEventDeliveryDTO;
 import com.banka1.banking.models.Event;
 import com.banka1.banking.models.helper.DeliveryStatus;
 import com.banka1.banking.services.EventService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -15,6 +16,7 @@ import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+@Hidden
 @ControllerAdvice
 @RequiredArgsConstructor
 public class InterbankDeliveryInterceptor implements ResponseBodyAdvice<Object> {

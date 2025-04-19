@@ -3,7 +3,7 @@ definitions:
     properties:
       public:
         type: integer
-      security_id:
+      portfolio_id:
         type: integer
     type: object
   dto.ActuaryDTO:
@@ -1366,17 +1366,12 @@ paths:
       summary: Dohvatanje svih hartija od vrednosti za korisnika
       tags:
       - Securities
-  /securities/{id}/public-count:
+  /securities/public-count:
     put:
       consumes:
       - application/json
       description: Menja broj hartija koje su označene kao javne u portfoliju korisnika.
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
       - description: Podaci za ažuriranje
         in: body
         name: body

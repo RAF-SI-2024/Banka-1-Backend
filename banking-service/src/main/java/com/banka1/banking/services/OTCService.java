@@ -118,7 +118,7 @@ public class OTCService {
                 dto.setRecipientAccount(toAccount.getAccountNumber());
                 dto.setFromAccountNumber(fromAccount.getAccountNumber());
                 dto.setPayementDescription("OTC transakcija");
-                dto.setPayementCode("403");
+                dto.setPayementCode("519");
                 dto.setPayementReference(null);
 
                 Transfer transfer = transferService.createMoneyTransferEntity(
@@ -194,8 +194,8 @@ public class OTCService {
 
             transaction.setAmount(amount);
             transaction.setUid(uid);
-            transaction.setBuyerAccount(accountRepository.findById(sellerAccountId).orElseThrow());
-            transaction.setSellerAccount(accountRepository.findById(buyerAccountId).orElseThrow());
+            transaction.setBuyerAccount(accountRepository.findById(buyerAccountId).orElseThrow());
+            transaction.setSellerAccount(accountRepository.findById(sellerAccountId).orElseThrow());
 
             otcTransactionRepository.saveAndFlush(transaction);
 
@@ -220,6 +220,41 @@ public class OTCService {
 
             fromAccount.setBalance(fromAccount.getBalance() - amount);
             toAccount.setBalance(toAccount.getBalance() + amount);
+
+            MoneyTransferDTO dto = new MoneyTransferDTO();
+            CustomerDTO customer = userServiceCustomer.getCustomerById(toAccount.getOwnerID());
+
+            dto.setAdress(customer.getAddress());
+            dto.setAmount(amount);
+            dto.setReceiver(customer.getFirstName() + " " + customer.getLastName());
+            dto.setRecipientAccount(toAccount.getAccountNumber());
+            dto.setFromAccountNumber(fromAccount.getAccountNumber());
+            dto.setPayementDescription("Premija za OTC transakciju");
+            dto.setPayementCode("403");
+            dto.setPayementReference(null);
+
+            Transfer transfer = transferService.createMoneyTransferEntity(
+                    fromAccount,
+                    toAccount,
+                    dto
+            );
+
+            transfer.setStatus(TransferStatus.COMPLETED);
+
+            Transaction bankTransaction = new Transaction();
+
+            bankTransaction.setBankOnly(false);
+            bankTransaction.setFinalAmount(amount);
+            bankTransaction.setFee(0.0);
+            bankTransaction.setCurrency(currencyRepository.getByCode(fromAccount.getCurrencyType()));
+            bankTransaction.setAmount(amount);
+            bankTransaction.setDescription("Premija za OTC transakciju");
+            bankTransaction.setTimestamp(Instant.now().toEpochMilli());
+            bankTransaction.setFromAccountId(fromAccount);
+            bankTransaction.setToAccountId(toAccount);
+            bankTransaction.setTransfer(transfer);
+
+            transactionRepository.save(bankTransaction);
 
             accountRepository.save(fromAccount);
             accountRepository.save(toAccount);

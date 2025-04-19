@@ -438,9 +438,11 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 
 	var buyerAccountID, sellerAccountID int64 = -1, -1
 
+	var buyerAccount *dto.Account
 	for _, acc := range buyerAccounts {
 		if acc.CurrencyType == "USD" {
 			buyerAccountID = acc.ID
+			buyerAccount = &acc
 			break
 		}
 	}
@@ -473,6 +475,13 @@ func (c *OTCTradeController) ExecuteOptionContract(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
 			Success: false,
 			Error:   "Kupac ili prodavac nema USD račun",
+		})
+	}
+
+	if buyerAccount.Balance < (contract.StrikePrice * float64(contract.Quantity)) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(types.Response{
+			Success: false,
+			Error:   "Kupčev račun nema dovoljno sredstava za izvršavanje ugovora",
 		})
 	}
 
