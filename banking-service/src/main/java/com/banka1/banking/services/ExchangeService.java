@@ -164,7 +164,6 @@ public class ExchangeService {
     @ExcludeFromGeneratedJacocoReport("Wrapper method")
     public Map<String, Object> calculatePreviewExchangeAutomatic(String fromCurrency, String toCurrency, Double amount) {
         if(fromCurrency.equals("RSD") || toCurrency.equals("RSD")){
-
             return calculatePreviewExchange(fromCurrency, toCurrency, amount);
             }
         else
@@ -202,25 +201,23 @@ public class ExchangeService {
         double fee = (fromCurrency.equalsIgnoreCase("RSD") && toCurrency.equalsIgnoreCase("RSD")) ? 0.0 : convertedAmount * 0.01;
         double finalAmount = convertedAmount - fee;
 
-        double provision;
+
         if (fromCurrency.equalsIgnoreCase("RSD")) {
-            provision = fee * 1 / exchangeRate;
             exchangeRate = 1 / exchangeRate;
-        } else {
-            provision = fee;
         }
 
         return Map.of(
                 "exchangeRate", exchangeRate,
                 "convertedAmount", convertedAmount,
                 "fee", fee,
-                "provision", provision,
+                "provision", fee,
                 "finalAmount", finalAmount
         );
     }
 
 
     public Map<String, Object> calculatePreviewExchangeForeign(String fromCurrency, String toCurrency, Double amount) {
+        log.warn("Ova funkcija ne radi kako treba");
         if (fromCurrency.equalsIgnoreCase("RSD") || toCurrency.equalsIgnoreCase("RSD")) {
             throw new RuntimeException("Ova metoda je samo za konverziju strane valute u stranu valutu.");
         }

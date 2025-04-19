@@ -5,6 +5,7 @@ import com.banka1.banking.dto.InternalTransferDTO;
 import com.banka1.banking.dto.MoneyTransferDTO;
 import com.banka1.banking.dto.NotificationDTO;
 import com.banka1.banking.models.*;
+import com.banka1.banking.models.Currency;
 import com.banka1.banking.models.helper.CurrencyType;
 import com.banka1.banking.models.helper.TransferStatus;
 import com.banka1.banking.models.helper.TransferType;
@@ -19,9 +20,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -152,85 +151,69 @@ public class TransferService {
         Double secondExchangedAmount = (Double) secondExchange.get("finalAmount");
         Double secondExchangeProvision = (Double) secondExchange.get("provision");
 
-
-
+        //skidamo korisniku EUR
         fromAccount.setBalance(fromAccount.getBalance() - transfer.getAmount());
+        // i stavljamo direktno na racun banke za tu valutu
         fromCurrencyBankAccount.setBalance(fromCurrencyBankAccount.getBalance() + transfer.getAmount());
-
-        rsdBankAccount.setBalance(rsdBankAccount.getBalance() + firstExchangeProvision + secondExchangeProvision);
-
+        // dodajemo konvertovanu svotu iz evra na racun dinara
+        rsdBankAccount.setBalance(rsdBankAccount.getBalance() + firstExchangeProvision);
+        //balance  - total + provision (finalAmount)
         toCurrencyBankAccount.setBalance(toCurrencyBankAccount.getBalance() - secondExchangedAmount);
+        //dodajemo pare na devizni racun korisnika
         toAccount.setBalance(toAccount.getBalance() + secondExchangedAmount);
 
-
-        Transfer transferToBank = createTransfer(
-                fromAccount,
-                fromCurrencyBankAccount,
-                transfer.getAmount(),
-                "Promena valute",
-                fromCurrencyBankAccount.getCompany().getName(),
-                fromCurrency,
-                fromCurrency,
-                null
-        );
-
-        Transfer transferFromBank = createTransfer(
-                toCurrencyBankAccount,
-                toAccount,
-                secondExchangedAmount,
-                "Promena valute",
-                receiver.getFirstName() + " " + receiver.getLastName(),
-                toCurrency,
-                toCurrency,
-                null
-        );
-        Transfer feeTransfer = createTransfer(
-                fromAccount,
-                rsdBankAccount,
-                firstExchangeProvision + secondExchangeProvision,
-                "Exchange fee from " + fromCurrency.getCode() + " to " + toCurrency.getCode(),
-                rsdBankAccount.getCompany().getName(),
-                fromCurrency,
-                rsd,
-                null
-        );
-
-
-        Transaction transactionToBank = createTransaction(
+        //from user -> bank (foreign currency)
+        Transaction firstTransaction = createTransaction(
                 true,
                 fromAccount,
                 fromCurrencyBankAccount,
                 transfer.getAmount(),
                 fromCurrency,
                 0.0,
-                "Exchange transaction: Foreign to RSD",
-                transferToBank
+                "Exchange: Foreign to RSD",
+                transfer
         );
 
-        Transaction transactionFromBank = createTransaction(
+        //from bank(foreign currency) -> RSD bank account
+        Transaction secondTransaction = createTransaction(
+                true,
+                fromCurrencyBankAccount,
+                rsdBankAccount,
+                firstExchangeProvision,
+                rsd,
+                0.0,
+                "Provision: Foreign to RSD",
+                transfer
+        );
+
+        //from RSD bank account -> foreign currency
+//        Transaction thirdTransaction = createTransaction(
+//                true,
+//                rsdBankAccount,
+//                toCurrencyBankAccount,
+//                secondExchangedAmount + secondExchangeProvision,
+//                toCurrency,
+//                0.0,
+//                "Provision: Foreign to RSD",
+//                transfer
+//        );
+
+        //from foreign bank account -> to account
+        Transaction fourthTransaction = createTransaction(
                 true,
                 toCurrencyBankAccount,
                 toAccount,
                 secondExchangedAmount,
                 toCurrency,
                 0.0,
-                "Exchange transaction: RSD to Foreign",
-                transferFromBank
-        );
-        Transaction feeTransaction = createFeeTransaction(
-                rsdBankAccount,
-                fromAccount,
-                firstExchangeProvision + secondExchangeProvision,
-                rsd,
-                "Exchange fee from " + fromCurrency.getCode() + " to " + toCurrency.getCode(),
-                feeTransfer
+                "Exchange: payment to customer",
+                transfer
         );
 
-        saveTransfersAndTransactions(
-                List.of(transferToBank, transferFromBank, feeTransfer),
-                List.of(transactionToBank, transactionFromBank, feeTransaction),
-                List.of(fromCurrencyBankAccount, toCurrencyBankAccount, rsdBankAccount)
-        );
+
+        Set<Transaction> transactions = new HashSet<>(List.of(firstTransaction, secondTransaction, fourthTransaction));
+        transactionRepository.saveAll(transactions);
+        transferRepository.save(transfer);
 
         return secondExchange;
     }
@@ -318,7 +301,8 @@ public class TransferService {
 
         return exchange;
     }
-
+    // base -> foreign -> 1 prov (foreign)
+    // foreigh -> foreigh -> 2 prov ( rsd i foreigh)
     /**
      * Performs an exchange from a foreign currency to RSD.
      */
@@ -377,7 +361,7 @@ public class TransferService {
         Transaction transactionToBank = createTransaction(
                 true,
                 fromAccount,
-                rsdBankAccount,
+                foreignBankAccount,
                 amount,
                 fromCurrency,
                 provision,
